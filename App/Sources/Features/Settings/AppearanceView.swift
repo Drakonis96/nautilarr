@@ -37,6 +37,7 @@ struct AppearanceView: View {
                 }
                 .padding(.vertical, 4)
             }
+            .tintedCards()
 
             Section {
                 LazyVGrid(columns: columns, spacing: 12) {
@@ -48,8 +49,9 @@ struct AppearanceView: View {
             } header: {
                 Text("Background Color")
             } footer: {
-                Text("A soft pastel wash behind every screen. Pick “System” for the plain background.")
+                Text("A solid colour fills the background while the cards stay light — just like the grey “System” default, but in your colour.")
             }
+            .tintedCards()
 
             Section("Appearance") {
                 Picker("Theme", selection: Binding(
@@ -60,6 +62,7 @@ struct AppearanceView: View {
                 }
                 .pickerStyle(.segmented)
             }
+            .tintedCards()
 
             Section {
                 Picker("App Language", selection: Binding(
@@ -77,6 +80,7 @@ struct AppearanceView: View {
             } footer: {
                 Text("The language changes immediately across the app.")
             }
+            .tintedCards()
 
             Section {
                 Picker("Text Size", selection: Binding(
@@ -93,6 +97,7 @@ struct AppearanceView: View {
             } footer: {
                 Text("Scales text throughout the app. The sample above previews the current size.")
             }
+            .tintedCards()
 
             Section {
                 ForEach(settings.reorderableTabOrder) { destination in
@@ -151,6 +156,7 @@ struct AppearanceView: View {
             } footer: {
                 Text("Tap “Edit” (top-right), then drag the ☰ handle to reorder. On iPhone the first four visible sections appear in the bottom tab bar; the rest fold into “More”. Tap the eye to hide a section. Home and Settings always stay visible.")
             }
+            .tintedCards()
 
             Section {
                 NavigationLink {
@@ -159,6 +165,7 @@ struct AppearanceView: View {
                     Label("Plex / Jellyfin shortcuts", systemImage: "play.rectangle.on.rectangle")
                 }
             }
+            .tintedCards()
         }
         .navigationTitle("Appearance")
         .toolbar { EditButton() }

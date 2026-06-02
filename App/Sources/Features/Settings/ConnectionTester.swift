@@ -25,69 +25,77 @@ enum ConnectionTester {
         var message: String
     }
 
-    static func test(instance: ServiceInstance, credential: Credential, monitor: NetworkMonitor?) async -> Result {
+    static func test(instance: ServiceInstance, credential: Credential, monitor: NetworkMonitor?, proxyCredential: Credential = .none) async -> Result {
+        // Merge the reverse-proxy Basic Auth header (if any) into a copy of the
+        // instance so the test goes through the same proxy gate as live requests.
+        let instance: ServiceInstance = {
+            guard let header = proxyCredential.basicAuthHeaderValue else { return instance }
+            var copy = instance
+            if copy.customHeaders["Authorization"] == nil { copy.customHeaders["Authorization"] = header }
+            return copy
+        }()
         switch instance.type {
         case .sonarr:
             let client = SonarrClient(instance: instance, credential: credential, monitor: monitor)
             do {
                 let status = try await client.systemStatus()
-                return Result(success: true, message: "Connected — \(status.appName ?? "service") \(status.version ?? "unknown").")
+                return Result(success: true, message: L("Connected — %@ %@.", status.appName ?? "service", status.version ?? "unknown"))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .radarr:
             let client = RadarrClient(instance: instance, credential: credential, monitor: monitor)
             do {
                 let status = try await client.systemStatus()
-                return Result(success: true, message: "Connected — \(status.appName ?? "service") \(status.version ?? "unknown").")
+                return Result(success: true, message: L("Connected — %@ %@.", status.appName ?? "service", status.version ?? "unknown"))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .lidarr:
             let client = LidarrClient(instance: instance, credential: credential, monitor: monitor)
             do {
                 let status = try await client.systemStatus()
-                return Result(success: true, message: "Connected — \(status.appName ?? "service") \(status.version ?? "unknown").")
+                return Result(success: true, message: L("Connected — %@ %@.", status.appName ?? "service", status.version ?? "unknown"))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .qbittorrent:
             let client = QBittorrentClient(instance: instance, credential: credential)
             do {
                 let version = try await client.version()
-                return Result(success: true, message: "Connected — qBittorrent \(version.version).")
+                return Result(success: true, message: L("Connected — qBittorrent %@.", version.version))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .sabnzbd:
             let client = SABnzbdClient(instance: instance, credential: credential, monitor: monitor)
             do {
                 let version = try await client.version()
-                return Result(success: true, message: "Connected — SABnzbd \(version.version ?? "unknown").")
+                return Result(success: true, message: L("Connected — SABnzbd %@.", version.version ?? "unknown"))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .overseerr:
             let client = OverseerrClient(instance: instance, credential: credential, monitor: monitor)
             do {
                 let status = try await client.status()
-                return Result(success: true, message: "Connected — version \(status.version ?? "unknown").")
+                return Result(success: true, message: L("Connected — version %@.", status.version ?? "unknown"))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .nzbget:
             let client = NZBGetClient(instance: instance, credential: credential, monitor: monitor)
             do {
                 let version = try await client.version()
-                return Result(success: true, message: "Connected — NZBGet \(version).")
+                return Result(success: true, message: L("Connected — NZBGet %@.", version))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .transmission:
             let client = TransmissionClient(instance: instance, credential: credential)
             do {
                 let version = try await client.version()
-                return Result(success: true, message: "Connected — Transmission \(version).")
+                return Result(success: true, message: L("Connected — Transmission %@.", version))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .deluge:
             let client = DelugeClient(instance: instance, credential: credential)
             do {
                 let version = try await client.version()
-                return Result(success: true, message: "Connected — Deluge \(version).")
+                return Result(success: true, message: L("Connected — Deluge %@.", version))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .tautulli:
@@ -96,21 +104,21 @@ enum ConnectionTester {
                 // Validate via a payload-agnostic probe, then best-effort the count.
                 try await client.ping()
                 let count = (try? await client.activity().count) ?? 0
-                return Result(success: true, message: "Connected — \(count) active stream(s).")
+                return Result(success: true, message: L("Connected — %lld active stream(s).", count))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .prowlarr:
             let client = ProwlarrClient(instance: instance, credential: credential, monitor: monitor)
             do {
                 let status = try await client.systemStatus()
-                return Result(success: true, message: "Connected — \(status.appName ?? "Prowlarr") \(status.version ?? "unknown").")
+                return Result(success: true, message: L("Connected — %@ %@.", status.appName ?? "Prowlarr", status.version ?? "unknown"))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .bazarr:
             let client = BazarrClient(instance: instance, credential: credential, monitor: monitor)
             do {
                 let status = try await client.systemStatus()
-                return Result(success: true, message: "Connected — Bazarr \(status.bazarrVersion ?? "unknown").")
+                return Result(success: true, message: L("Connected — Bazarr %@.", status.bazarrVersion ?? "unknown"))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .ssh:
@@ -126,9 +134,9 @@ enum ConnectionTester {
             do {
                 let uname = try await session.run("uname -sr || echo connected")
                 await session.disconnect()
-                return Result(success: true, message: "Connected — \(uname.trimmingCharacters(in: .whitespacesAndNewlines)).")
+                return Result(success: true, message: L("Connected — %@.", uname.trimmingCharacters(in: .whitespacesAndNewlines)))
             } catch let SSHSession.SSHError.hostKeyUnverified(fingerprint, _) {
-                return Result(success: false, message: "Reachable, but this host isn't trusted yet. Open the SSH service and verify this fingerprint to connect:\n\(fingerprint)")
+                return Result(success: false, message: L("Reachable, but this host isn't trusted yet. Open the SSH service and verify this fingerprint to connect:\n%@", fingerprint))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .jellystat:
@@ -136,23 +144,29 @@ enum ConnectionTester {
             do {
                 try await client.testReachable()
                 let count = (try? await client.sessions().count) ?? 0
-                return Result(success: true, message: "Connected — \(count) active session(s).")
+                return Result(success: true, message: L("Connected — %lld active session(s).", count))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .unraid:
             let client = UnraidClient(instance: instance, credential: credential, monitor: monitor)
             do {
                 let snapshot = try await client.snapshot()
-                return Result(success: true, message: "Connected — array \(snapshot.array?.state ?? "unknown"), \(snapshot.runningContainers) container(s) running.")
+                return Result(success: true, message: L("Connected — array %@, %lld container(s) running.", snapshot.array?.state ?? "unknown", snapshot.runningContainers))
             } catch { return Result(success: false, message: describe(error)) }
 
         case .nzbhydra2, .jackett:
             let client = TorznabClient(instance: instance, credential: credential, monitor: monitor)
             do {
                 let caps = try await client.capabilities()
-                return Result(success: true, message: "Connected — \(caps.serverTitle ?? "indexer") (\(caps.categoryCount) categories).")
+                return Result(success: true, message: L("Connected — %@ (%lld categories).", caps.serverTitle ?? "indexer", caps.categoryCount))
             } catch { return Result(success: false, message: describe(error)) }
         }
+    }
+
+    /// Localised, formatted connection-test message (looks the key up in the
+    /// app's `Localizable.strings`, then substitutes the arguments).
+    private static func L(_ key: String, _ args: CVarArg...) -> String {
+        String(format: NSLocalizedString(key, comment: "connection test result"), arguments: args)
     }
 
     private static func describe(_ error: Error) -> String {

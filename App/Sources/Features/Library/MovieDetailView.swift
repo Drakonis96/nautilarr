@@ -97,14 +97,17 @@ struct MovieDetailView: View {
 
             if let overview = movie.overview, !overview.isEmpty {
                 Section("Overview") { Text(overview).font(.subheadline) }
+                    .tintedCards()
             }
 
             // Details sits right under the synopsis (the cast strip used to wedge
             // between them, pushing details far down the page).
             detailsSection
+                .tintedCards()
 
             if movie.hasFile == true, let file = movie.movieFile, let m = movieFileMeta(file), m.hasAny {
                 Section("File") { FileInfoRows(meta: m) }
+                    .tintedCards()
             }
 
             // Cast only when a requests service (Overseerr/Jellyseerr) is set up —
@@ -136,6 +139,7 @@ struct MovieDetailView: View {
                     Label("Delete Movie", systemImage: "trash")
                 }
             }
+            .tintedCards()
         }
         .navigationTitle(movie.title)
         .task { model.configure(store: instanceStore) }
@@ -273,6 +277,7 @@ private struct MovieReleasesView: View {
             } header: {
                 if !model.releases.isEmpty { Text("\(displayed.count) releases") }
             }
+            .tintedCards()
         }
         .navigationTitle("Releases")
         .toolbar {

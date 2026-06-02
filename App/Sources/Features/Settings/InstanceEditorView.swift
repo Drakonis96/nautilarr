@@ -6,14 +6,15 @@ import NautilarrCore
 struct InstanceEditorView: View {
     @EnvironmentObject private var instanceStore: InstanceStore
     @EnvironmentObject private var networkMonitor: NetworkMonitor
+    @EnvironmentObject private var settings: AppSettings
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var model: InstanceEditorViewModel
     private let isEditing: Bool
     @State private var certResetConfirmed = false
 
-    init(instance: ServiceInstance? = nil, credential: Credential = .none) {
-        _model = StateObject(wrappedValue: InstanceEditorViewModel(instance: instance, credential: credential))
+    init(instance: ServiceInstance? = nil, credential: Credential = .none, proxyCredential: Credential = .none) {
+        _model = StateObject(wrappedValue: InstanceEditorViewModel(instance: instance, credential: credential, proxyCredential: proxyCredential))
         isEditing = instance != nil
     }
 
@@ -21,13 +22,22 @@ struct InstanceEditorView: View {
         NavigationStack {
             Form {
                 detailsSection
+                    .tintedCards()
                 connectionSection
+                    .tintedCards()
                 credentialSection
+                    .tintedCards()
+                proxyAuthSection
+                    .tintedCards()
                 headersSection
+                    .tintedCards()
                 advancedSection
+                    .tintedCards()
                 testSection
-                if isEditing { deleteSection }
+                    .tintedCards()
+                if isEditing { deleteSection.tintedCards() }
             }
+            .appBackground(settings.background)
             .navigationTitle(isEditing ? "Edit Service" : "Add Service")
             .alert("Certificate pin reset", isPresented: $certResetConfirmed) {
                 Button("OK", role: .cancel) {}
@@ -128,6 +138,23 @@ struct InstanceEditorView: View {
         }
     }
 
+    @ViewBuilder
+    private var proxyAuthSection: some View {
+        Section {
+            Toggle("Behind a reverse proxy", isOn: $model.proxyAuthEnabled.animation())
+            if model.proxyAuthEnabled {
+                TextField("Proxy username", text: $model.proxyUsername)
+                    .textInputAutocapitalizationNever()
+                    .autocorrectionDisabled()
+                SecureField("Proxy password", text: $model.proxyPassword)
+            }
+        } header: {
+            Text("Reverse proxy authentication")
+        } footer: {
+            Text("Optional. If this service sits behind a reverse proxy that asks for HTTP Basic Auth (e.g. Cloudflare, nginx, Authelia), enter those credentials here — separate from the service's own credentials. They're stored securely in the Keychain (never in plain text) and sent as an Authorization header on every request.")
+        }
+    }
+
     private var headersSection: some View {
         Section {
             ForEach($model.headers) { $pair in
@@ -202,6 +229,7 @@ struct InstanceEditorView: View {
         } else {
             instanceStore.add(instance, credential: credential)
         }
+        instanceStore.setProxyCredential(model.makeProxyCredential(), for: instance)
         dismiss()
     }
 }
@@ -210,6 +238,7 @@ struct InstanceEditorView: View {
 /// grouped by category, with a checkmark on the current selection.
 private struct ServiceTypeSelectionList: View {
     @Binding var selection: ServiceType
+    @EnvironmentObject private var settings: AppSettings
     @Environment(\.dismiss) private var dismiss
 
     private var categories: [(name: String, types: [ServiceType])] {
@@ -243,7 +272,9 @@ private struct ServiceTypeSelectionList: View {
                     }
                 }
             }
+            .tintedCards()
         }
+        .appBackground(settings.background)
         .navigationTitle("Service Type")
     }
 }

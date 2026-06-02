@@ -69,6 +69,7 @@ struct NetworksSettingsView: View {
             } footer: {
                 Text("Each network is a separate set of services — e.g. one for home and one for a remote/proxied setup. Switching changes everything the app shows.")
             }
+            .tintedCards()
 
             Section("Add network") {
                 HStack {
@@ -82,6 +83,7 @@ struct NetworksSettingsView: View {
                     .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
+            .tintedCards()
         }
         .navigationTitle("Networks")
         .alert("Rename Network", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {

@@ -42,16 +42,18 @@ struct SettingsView: View {
     private var settingsList: some View {
         List {
             brandHeader
-            servicesSection
-            appearanceSection
-            configurationSection
-            aboutSection
+            servicesSection.tintedCards()
+            appearanceSection.tintedCards()
+            configurationSection.tintedCards()
+            aboutSection.tintedCards()
         }
         .sheet(isPresented: $isAddingInstance) {
             InstanceEditorView()
         }
         .sheet(item: $editingInstance) { instance in
-            InstanceEditorView(instance: instance, credential: instanceStore.credential(for: instance))
+            InstanceEditorView(instance: instance,
+                               credential: instanceStore.credential(for: instance),
+                               proxyCredential: instanceStore.proxyCredential(for: instance))
         }
         .fileExporter(
             isPresented: $isExporting,
@@ -130,7 +132,7 @@ struct SettingsView: View {
         let services = instanceStore.instancesInActiveNetwork
         return Section {
             NavigationLink {
-                NetworksSettingsView()
+                NetworksSettingsView().appBackground(settings.background)
             } label: {
                 Label {
                     HStack {
@@ -167,32 +169,32 @@ struct SettingsView: View {
     private var appearanceSection: some View {
         Section {
             NavigationLink {
-                AppearanceView()
+                AppearanceView().appBackground(settings.background)
             } label: {
                 Label("Appearance", systemImage: "paintpalette")
             }
             NavigationLink {
-                NotificationSettingsView()
+                NotificationSettingsView().appBackground(settings.background)
             } label: {
                 Label("Notifications", systemImage: "bell.badge")
             }
             NavigationLink {
-                DownloadsSettingsView()
+                DownloadsSettingsView().appBackground(settings.background)
             } label: {
                 Label("Downloads", systemImage: "arrow.down.circle")
             }
             NavigationLink {
-                ShortcutsSettingsView()
+                ShortcutsSettingsView().appBackground(settings.background)
             } label: {
                 Label("Plex / Jellyfin shortcuts", systemImage: "play.rectangle.on.rectangle")
             }
             NavigationLink {
-                SecuritySettingsView()
+                SecuritySettingsView().appBackground(settings.background)
             } label: {
                 Label("Security", systemImage: "lock.shield")
             }
             NavigationLink {
-                AdvancedSettingsView()
+                AdvancedSettingsView().appBackground(settings.background)
             } label: {
                 Label("Advanced", systemImage: "gearshape.2")
             }

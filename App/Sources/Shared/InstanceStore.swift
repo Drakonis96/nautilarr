@@ -78,7 +78,10 @@ final class InstanceStore: ObservableObject {
     /// Refuses to delete the last remaining network.
     func deleteNetwork(_ id: UUID) {
         guard networks.count > 1 else { return }
-        instances.filter { $0.networkID == id }.forEach { try? credentials.delete(for: $0.id) }
+        instances.filter { $0.networkID == id }.forEach {
+            try? credentials.delete(for: $0.id)
+            try? credentials.deleteProxyCredential(for: $0.id)
+        }
         instances.removeAll { $0.networkID == id }
         networks.removeAll { $0.id == id }
         if activeNetworkID == id, let first = networks.first { activeNetworkID = first.id }
@@ -121,11 +124,43 @@ final class InstanceStore: ObservableObject {
     func remove(_ instance: ServiceInstance) {
         instances.removeAll { $0.id == instance.id }
         try? credentials.delete(for: instance.id)
+        try? credentials.deleteProxyCredential(for: instance.id)
         persist()
     }
 
     func credential(for instance: ServiceInstance) -> Credential {
         (try? credentials.credential(for: instance.id)) ?? .none
+    }
+
+    // MARK: - Reverse-proxy Basic Auth
+
+    /// The optional HTTP Basic Auth credential for a reverse proxy in front of
+    /// the service (stored securely, separate from the service's own credential).
+    func proxyCredential(for instance: ServiceInstance) -> Credential {
+        ((try? credentials.proxyCredential(for: instance.id)) ?? nil) ?? .none
+    }
+
+    /// Saves (or clears, when empty) the reverse-proxy Basic Auth credential.
+    func setProxyCredential(_ credential: Credential, for instance: ServiceInstance) {
+        if credential.isEmpty {
+            try? credentials.deleteProxyCredential(for: instance.id)
+        } else {
+            try? credentials.saveProxyCredential(credential, for: instance.id)
+        }
+    }
+
+    /// Returns a copy of `instance` with the stored reverse-proxy Basic Auth
+    /// header merged into its custom headers — **in memory only**, so the secret
+    /// is attached to outgoing requests (via `APIClient`'s `extraHeaders`) but
+    /// never persisted alongside the instance. No-op when no proxy credential is
+    /// set; an explicit user-set `Authorization` header takes precedence.
+    func withProxyAuth(_ instance: ServiceInstance) -> ServiceInstance {
+        guard let header = proxyCredential(for: instance).basicAuthHeaderValue else { return instance }
+        var copy = instance
+        if copy.customHeaders["Authorization"] == nil {
+            copy.customHeaders["Authorization"] = header
+        }
+        return copy
     }
 
     /// Whether secrets are stored in the system Keychain (`true`) or the
@@ -138,62 +173,62 @@ final class InstanceStore: ObservableObject {
     /// Sonarr service.
     func sonarrClient(for instance: ServiceInstance) -> SonarrClient? {
         guard instance.type == .sonarr else { return nil }
-        return SonarrClient(instance: instance, credential: credential(for: instance), monitor: monitor)
+        return SonarrClient(instance: withProxyAuth(instance), credential: credential(for: instance), monitor: monitor)
     }
 
     func radarrClient(for instance: ServiceInstance) -> RadarrClient? {
         guard instance.type == .radarr else { return nil }
-        return RadarrClient(instance: instance, credential: credential(for: instance), monitor: monitor)
+        return RadarrClient(instance: withProxyAuth(instance), credential: credential(for: instance), monitor: monitor)
     }
 
     func lidarrClient(for instance: ServiceInstance) -> LidarrClient? {
         guard instance.type == .lidarr else { return nil }
-        return LidarrClient(instance: instance, credential: credential(for: instance), monitor: monitor)
+        return LidarrClient(instance: withProxyAuth(instance), credential: credential(for: instance), monitor: monitor)
     }
 
     func qbittorrentClient(for instance: ServiceInstance) -> QBittorrentClient? {
         guard instance.type == .qbittorrent else { return nil }
-        return QBittorrentClient(instance: instance, credential: credential(for: instance))
+        return QBittorrentClient(instance: withProxyAuth(instance), credential: credential(for: instance))
     }
 
     func sabnzbdClient(for instance: ServiceInstance) -> SABnzbdClient? {
         guard instance.type == .sabnzbd else { return nil }
-        return SABnzbdClient(instance: instance, credential: credential(for: instance), monitor: monitor)
+        return SABnzbdClient(instance: withProxyAuth(instance), credential: credential(for: instance), monitor: monitor)
     }
 
     func overseerrClient(for instance: ServiceInstance) -> OverseerrClient? {
         guard instance.type == .overseerr else { return nil }
-        return OverseerrClient(instance: instance, credential: credential(for: instance), monitor: monitor)
+        return OverseerrClient(instance: withProxyAuth(instance), credential: credential(for: instance), monitor: monitor)
     }
 
     func nzbgetClient(for instance: ServiceInstance) -> NZBGetClient? {
         guard instance.type == .nzbget else { return nil }
-        return NZBGetClient(instance: instance, credential: credential(for: instance), monitor: monitor)
+        return NZBGetClient(instance: withProxyAuth(instance), credential: credential(for: instance), monitor: monitor)
     }
 
     func transmissionClient(for instance: ServiceInstance) -> TransmissionClient? {
         guard instance.type == .transmission else { return nil }
-        return TransmissionClient(instance: instance, credential: credential(for: instance))
+        return TransmissionClient(instance: withProxyAuth(instance), credential: credential(for: instance))
     }
 
     func delugeClient(for instance: ServiceInstance) -> DelugeClient? {
         guard instance.type == .deluge else { return nil }
-        return DelugeClient(instance: instance, credential: credential(for: instance))
+        return DelugeClient(instance: withProxyAuth(instance), credential: credential(for: instance))
     }
 
     func tautulliClient(for instance: ServiceInstance) -> TautulliClient? {
         guard instance.type == .tautulli else { return nil }
-        return TautulliClient(instance: instance, credential: credential(for: instance), monitor: monitor)
+        return TautulliClient(instance: withProxyAuth(instance), credential: credential(for: instance), monitor: monitor)
     }
 
     func prowlarrClient(for instance: ServiceInstance) -> ProwlarrClient? {
         guard instance.type == .prowlarr else { return nil }
-        return ProwlarrClient(instance: instance, credential: credential(for: instance), monitor: monitor)
+        return ProwlarrClient(instance: withProxyAuth(instance), credential: credential(for: instance), monitor: monitor)
     }
 
     func bazarrClient(for instance: ServiceInstance) -> BazarrClient? {
         guard instance.type == .bazarr else { return nil }
-        return BazarrClient(instance: instance, credential: credential(for: instance), monitor: monitor)
+        return BazarrClient(instance: withProxyAuth(instance), credential: credential(for: instance), monitor: monitor)
     }
 
     func sshSession(for instance: ServiceInstance, timeout: TimeInterval = 30) -> SSHSession? {
@@ -228,23 +263,23 @@ final class InstanceStore: ObservableObject {
 
     func jellystatClient(for instance: ServiceInstance) -> JellystatClient? {
         guard instance.type == .jellystat else { return nil }
-        return JellystatClient(instance: instance, credential: credential(for: instance), monitor: monitor)
+        return JellystatClient(instance: withProxyAuth(instance), credential: credential(for: instance), monitor: monitor)
     }
 
     func unraidClient(for instance: ServiceInstance) -> UnraidClient? {
         guard instance.type == .unraid else { return nil }
-        return UnraidClient(instance: instance, credential: credential(for: instance), monitor: monitor)
+        return UnraidClient(instance: withProxyAuth(instance), credential: credential(for: instance), monitor: monitor)
     }
 
     func torznabClient(for instance: ServiceInstance) -> TorznabClient? {
         guard instance.type == .nzbhydra2 || instance.type == .jackett else { return nil }
-        return TorznabClient(instance: instance, credential: credential(for: instance), monitor: monitor)
+        return TorznabClient(instance: withProxyAuth(instance), credential: credential(for: instance), monitor: monitor)
     }
 
     /// Headers needed to fetch images served behind a service's auth, combining
     /// custom headers with the API key (when header-based).
     func imageHeaders(for instance: ServiceInstance) -> [String: String] {
-        var headers = instance.customHeaders
+        var headers = withProxyAuth(instance).customHeaders
         if case let .apiKeyHeader(name) = instance.type.authenticationKind,
            let key = credential(for: instance).apiKeyValue {
             headers[name] = key
@@ -308,6 +343,9 @@ final class InstanceStore: ObservableObject {
         var instances: [ServiceInstance]
         var credentials: [String: Credential]
         var networks: [ServiceNetwork]?
+        /// Optional reverse-proxy Basic Auth credentials, keyed by instance id
+        /// (added later — older bundles simply omit it).
+        var proxyCredentials: [String: Credential]?
     }
 
     /// Errors surfaced when importing a configuration bundle.
@@ -325,10 +363,14 @@ final class InstanceStore: ObservableObject {
     /// with the given passphrase, so the backup file is useless if leaked.
     func exportConfiguration(passphrase: String) -> Data? {
         var creds: [String: Credential] = [:]
+        var proxyCreds: [String: Credential] = [:]
         for instance in instances {
             creds[instance.id.uuidString] = credential(for: instance)
+            let proxy = proxyCredential(for: instance)
+            if !proxy.isEmpty { proxyCreds[instance.id.uuidString] = proxy }
         }
-        let bundle = ConfigBundle(instances: instances, credentials: creds, networks: networks)
+        let bundle = ConfigBundle(instances: instances, credentials: creds, networks: networks,
+                                  proxyCredentials: proxyCreds.isEmpty ? nil : proxyCreds)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         guard let json = try? encoder.encode(bundle) else { return nil }
@@ -348,7 +390,10 @@ final class InstanceStore: ObservableObject {
             json = data
         }
         let bundle = try JSONDecoder().decode(ConfigBundle.self, from: json)
-        for instance in instances { try? credentials.delete(for: instance.id) }
+        for instance in instances {
+            try? credentials.delete(for: instance.id)
+            try? credentials.deleteProxyCredential(for: instance.id)
+        }
         instances = bundle.instances
         // Restore networks (v2+); older bundles fall back to the default network.
         if let importedNetworks = bundle.networks, !importedNetworks.isEmpty {
@@ -365,6 +410,9 @@ final class InstanceStore: ObservableObject {
         for instance in bundle.instances {
             if let cred = bundle.credentials[instance.id.uuidString] {
                 try credentials.save(cred, for: instance.id)
+            }
+            if let proxy = bundle.proxyCredentials?[instance.id.uuidString] {
+                try? credentials.saveProxyCredential(proxy, for: instance.id)
             }
         }
         persist(); persistNetworks()

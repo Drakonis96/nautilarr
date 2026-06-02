@@ -58,7 +58,12 @@ struct DownloadsView: View {
         .overlay(alignment: .bottom) { Toast(message: model.seedLimitStatus) { model.seedLimitStatus = nil } }
         .refreshable { await reload() }
         .task(id: settings.autoRefreshSeconds) { await autoRefreshLoop() }
-        .toolbar { if model.hasServices { globalActions } }
+        .toolbar {
+            if model.hasServices { globalActions }
+            ToolbarItem(placement: .topBarTrailing) {
+                RefreshSpinnerButton(isLoading: model.isLoading) { Task { await reload() } }
+            }
+        }
         .confirmationDialog("Remove from queue?", isPresented: .constant(pendingRemoval != nil), titleVisibility: .visible) {
             if let pendingRemoval {
                 Button("Remove from queue only") {
@@ -163,6 +168,7 @@ struct DownloadsView: View {
                             }
                         }
                 }
+                .tintedCards()
             }
         }
     }

@@ -47,12 +47,16 @@ struct BazarrSubtitleSearchView: View {
                     Section {
                         Text(target.subtitle).font(.caption).foregroundStyle(.secondary)
                     }
+                    .tintedCards()
                     if isLoading {
                         HStack { Spacer(); ProgressView(); Spacer() }
+                            .tintedCards()
                     } else if filtered.isEmpty {
                         Text("No subtitles found for this selection.").foregroundStyle(.secondary).font(.subheadline)
+                            .tintedCards()
                     }
                     ForEach(filtered) { result in resultRow(result) }
+                        .tintedCards()
                 }
             }
             .navigationTitle(target.title)

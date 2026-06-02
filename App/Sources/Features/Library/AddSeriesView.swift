@@ -34,6 +34,7 @@ struct AddSeriesView: View {
                         }
                         .buttonStyle(.plain)
                     }
+                    .tintedCards()
                 }
                 .overlay { if isSearching { ProgressView() } }
             }
@@ -106,6 +107,7 @@ struct AddSeriesOptionsView: View {
         NavigationStack {
             Form {
                 Section { Text(lookup.title).font(.headline) }
+                    .tintedCards()
                 Section("Options") {
                     Picker("Quality profile", selection: $qualityProfileId) {
                         ForEach(profiles) { Text($0.name).tag(Optional($0.id)) }
@@ -122,8 +124,10 @@ struct AddSeriesOptionsView: View {
                     Toggle("Season folders", isOn: $seasonFolder)
                     Toggle("Search on add", isOn: $searchOnAdd)
                 }
+                .tintedCards()
                 if let error {
                     Section { Label(error, systemImage: "xmark.octagon").foregroundStyle(.red) }
+                        .tintedCards()
                 }
             }
             .navigationTitle("Add Options")

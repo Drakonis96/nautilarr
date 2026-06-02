@@ -25,10 +25,12 @@ struct SeriesDetailView: View {
 
             if let overview = item.series.overview, !overview.isEmpty {
                 Section("Overview") { Text(overview).font(.subheadline) }
+                    .tintedCards()
             }
 
             // Details right under the synopsis; cast (if any) after it.
             detailsSection
+                .tintedCards()
 
             if hasCastSource {
                 Section { MediaCastStrip(mediaType: "tv", tmdbId: series.tmdbId, title: series.title, year: series.year) }
@@ -37,7 +39,9 @@ struct SeriesDetailView: View {
             }
 
             actionsSection
+                .tintedCards()
             seasonsSection
+                .tintedCards()
         }
         .listStyle(.insetGrouped)
         .navigationTitle(item.series.title)

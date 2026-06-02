@@ -29,6 +29,7 @@ struct ServerView: View {
                         }
                     }
                 }
+                .tintedCards()
             }
 
             if !model.lines.isEmpty {
@@ -47,6 +48,7 @@ struct ServerView: View {
                         }
                     }
                 }
+                .tintedCards()
             }
 
             Section("Configured services") {
@@ -66,6 +68,7 @@ struct ServerView: View {
                     }
                 }
             }
+            .tintedCards()
 
             if sshInstances.isEmpty {
                 Section {
@@ -74,11 +77,19 @@ struct ServerView: View {
                 } footer: {
                     sshAvailabilityFooter
                 }
+                .tintedCards()
             }
         }
         .overlay { if model.isLoading && model.lines.isEmpty { ProgressView() } }
         .refreshable { await model.load(store: instanceStore) }
         .task { await model.load(store: instanceStore) }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                RefreshSpinnerButton(isLoading: model.isLoading) {
+                    Task { await model.load(store: instanceStore) }
+                }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .nautilarrRefresh)) { _ in
             Task { await model.load(store: instanceStore) }
         }

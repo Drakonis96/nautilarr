@@ -80,6 +80,13 @@ struct LibraryView: View {
         .overlay(alignment: .bottom) { Toast(message: statusMessage) { statusMessage = nil } }
         .refreshable { await model.load(store: instanceStore) }
         .task { await model.load(store: instanceStore) }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                RefreshSpinnerButton(isLoading: model.isLoading) {
+                    Task { await model.load(store: instanceStore) }
+                }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .nautilarrRefresh)) { _ in
             Task { await model.load(store: instanceStore) }
         }

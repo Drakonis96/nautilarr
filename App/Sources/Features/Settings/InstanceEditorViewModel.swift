@@ -24,6 +24,12 @@ final class InstanceEditorViewModel: ObservableObject {
     @Published var password: String
     @Published var sshPrivateKey: String
 
+    // Optional reverse-proxy (HTTP Basic Auth) credentials — separate from the
+    // service's own credential, for a proxy/Cloudflare gate in front of it.
+    @Published var proxyAuthEnabled: Bool
+    @Published var proxyUsername: String
+    @Published var proxyPassword: String
+
     @Published var isTesting = false
     @Published var testResult: ConnectionTester.Result?
 
@@ -35,7 +41,7 @@ final class InstanceEditorViewModel: ObservableObject {
         var value: String
     }
 
-    init(instance: ServiceInstance? = nil, credential: Credential = .none) {
+    init(instance: ServiceInstance? = nil, credential: Credential = .none, proxyCredential: Credential = .none) {
         self.existingID = instance?.id
         self.type = instance?.type ?? .sonarr
         self.name = instance?.name ?? ""
@@ -59,6 +65,19 @@ final class InstanceEditorViewModel: ObservableObject {
         case .none:
             apiKey = ""; username = ""; password = ""; sshPrivateKey = ""
         }
+
+        if case let .usernamePassword(user, pass) = proxyCredential, !(user.isEmpty && pass.isEmpty) {
+            proxyAuthEnabled = true; proxyUsername = user; proxyPassword = pass
+        } else {
+            proxyAuthEnabled = false; proxyUsername = ""; proxyPassword = ""
+        }
+    }
+
+    /// The reverse-proxy Basic Auth credential as entered (or `.none` when the
+    /// toggle is off), to be stored securely — never on the instance itself.
+    func makeProxyCredential() -> Credential {
+        guard proxyAuthEnabled else { return .none }
+        return .usernamePassword(username: proxyUsername, password: proxyPassword)
     }
 
     var isValid: Bool {
@@ -106,7 +125,8 @@ final class InstanceEditorViewModel: ObservableObject {
         let result = await ConnectionTester.test(
             instance: makeInstance(),
             credential: makeCredential(),
-            monitor: monitor
+            monitor: monitor,
+            proxyCredential: makeProxyCredential()
         )
         testResult = result
         isTesting = false

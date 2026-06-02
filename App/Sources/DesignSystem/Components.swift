@@ -326,3 +326,23 @@ enum Format {
         "\(Int((fraction * 100).rounded()))%"
     }
 }
+
+/// A toolbar refresh button: an arrow that spins continuously while loading.
+/// Tapping it triggers `action`; it's disabled while already loading.
+struct RefreshSpinnerButton: View {
+    let isLoading: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "arrow.clockwise")
+                .rotationEffect(.degrees(isLoading ? 360 : 0))
+                .animation(isLoading
+                           ? .linear(duration: 0.9).repeatForever(autoreverses: false)
+                           : .default,
+                           value: isLoading)
+        }
+        .disabled(isLoading)
+        .accessibilityLabel(Text("Refresh"))
+    }
+}

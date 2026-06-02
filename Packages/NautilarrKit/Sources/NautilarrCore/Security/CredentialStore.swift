@@ -65,6 +65,29 @@ public struct CredentialStore: Sendable {
         try store.remove(for: account(for: instanceID))
     }
 
+    // MARK: - Reverse-proxy Basic Auth credential
+    //
+    // A SECOND, optional secret per instance: the username/password for an HTTP
+    // Basic Auth gate (reverse proxy / Cloudflare Access) sitting in front of the
+    // service. Kept separate from the service's own `Credential` and stored in
+    // the same protected store, so it's never written to plain `instances.json`.
+
+    private func proxyAccount(for instanceID: UUID) -> String { "proxy.\(instanceID.uuidString)" }
+
+    public func saveProxyCredential(_ credential: Credential, for instanceID: UUID) throws {
+        let data = try encoder.encode(credential)
+        try store.set(data, for: proxyAccount(for: instanceID))
+    }
+
+    public func proxyCredential(for instanceID: UUID) throws -> Credential? {
+        guard let data = try store.data(for: proxyAccount(for: instanceID)) else { return nil }
+        return try decoder.decode(Credential.self, from: data)
+    }
+
+    public func deleteProxyCredential(for instanceID: UUID) throws {
+        try store.remove(for: proxyAccount(for: instanceID))
+    }
+
     // MARK: - SSH known-host keys (host-key pinning / TOFU)
     //
     // Pinned SSH host keys are not secret, but they MUST be tamper-resistant —

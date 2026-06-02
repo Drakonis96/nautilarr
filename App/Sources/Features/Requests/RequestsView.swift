@@ -36,6 +36,13 @@ struct RequestsView: View {
         }
         .overlay(alignment: .bottom) { Toast(message: model.statusMessage) { model.statusMessage = nil } }
         .task(id: model.filter) { await model.load(store: instanceStore) }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                RefreshSpinnerButton(isLoading: model.isLoading) {
+                    Task { await model.load(store: instanceStore) }
+                }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .nautilarrRefresh)) { _ in
             Task { await model.load(store: instanceStore) }
         }
@@ -58,6 +65,7 @@ struct RequestsView: View {
             }
             .pickerStyle(.segmented)
             .listRowSeparator(.hidden)
+            .tintedCards()
 
             ForEach(model.entries) { entry in
                 RequestRow(
@@ -71,8 +79,10 @@ struct RequestsView: View {
                     } label: { Label("Delete", systemImage: "trash") }
                 }
             }
+            .tintedCards()
             if model.entries.isEmpty && !model.isLoading {
                 Text("No requests.").foregroundStyle(.secondary)
+                    .tintedCards()
             }
         }
         .overlay { if model.isLoading && model.entries.isEmpty { ProgressView() } }
@@ -92,13 +102,16 @@ struct RequestsView: View {
             List {
                 if model.isSearching {
                     HStack { Spacer(); ProgressView(); Spacer() }
+                        .tintedCards()
                 } else if model.searchResults.isEmpty {
                     Text("Search to find movies and shows to request.")
                         .foregroundStyle(.secondary).font(.subheadline)
+                        .tintedCards()
                 }
                 ForEach(model.searchResults) { result in
                     DiscoverRow(result: result) { requesting = result }
                 }
+                .tintedCards()
             }
         }
     }

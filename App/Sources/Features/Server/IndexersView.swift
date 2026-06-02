@@ -25,6 +25,7 @@ struct IndexersView: View {
                             ProwlarrHubView(instance: instance)
                         } label: { Label(instance.name, systemImage: "magnifyingglass.circle") }
                     }
+                    .tintedCards()
                 }
             }
         }

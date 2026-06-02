@@ -36,6 +36,7 @@ struct AddArtistView: View {
                             }
                         }.buttonStyle(.plain)
                     }
+                    .tintedCards()
                 }
                 .overlay { if isSearching { ProgressView() } }
             }
@@ -84,6 +85,7 @@ struct AddArtistOptionsView: View {
         NavigationStack {
             Form {
                 Section { Text(lookup.artistName).font(.headline) }
+                    .tintedCards()
                 Section("Options") {
                     Picker("Quality profile", selection: $qualityProfileId) {
                         ForEach(qualityProfiles) { Text($0.name).tag(Optional($0.id)) }
@@ -97,7 +99,8 @@ struct AddArtistOptionsView: View {
                     Toggle("Monitored", isOn: $monitored)
                     Toggle("Search on add", isOn: $searchOnAdd)
                 }
-                if let error { Section { Label(error, systemImage: "xmark.octagon").foregroundStyle(.red) } }
+                .tintedCards()
+                if let error { Section { Label(error, systemImage: "xmark.octagon").foregroundStyle(.red) }.tintedCards() }
             }
             .navigationTitle("Add Options")
             .toolbar {

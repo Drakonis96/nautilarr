@@ -24,6 +24,7 @@ struct NotificationSettingsView: View {
             } footer: {
                 Text("Nautilarr uses local notifications only. Push notifications while the app is closed are not possible with free-certificate distribution.")
             }
+            .tintedCards()
 
             Section("Alert me about") {
                 ForEach(NotificationEvent.allCases) { event in
@@ -33,6 +34,7 @@ struct NotificationSettingsView: View {
                     ))
                 }
             }
+            .tintedCards()
         }
         .navigationTitle("Notifications")
         .task { await notifications.refreshAuthorizationStatus() }

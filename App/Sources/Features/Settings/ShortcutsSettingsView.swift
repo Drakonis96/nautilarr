@@ -11,6 +11,7 @@ struct ShortcutsSettingsView: View {
             ForEach(MediaShortcut.allCases) { kind in
                 section(for: kind)
             }
+            .tintedCards()
         }
         .navigationTitle("Shortcuts")
     }

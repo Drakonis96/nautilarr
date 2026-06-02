@@ -17,6 +17,7 @@ struct ProwlarrIndexersView: View {
         List {
             if indexers.isEmpty && !isLoading {
                 Text("No indexers configured.").foregroundStyle(.secondary)
+                    .tintedCards()
             }
             ForEach(indexers) { indexer in
                 HStack(spacing: 10) {
@@ -45,6 +46,7 @@ struct ProwlarrIndexersView: View {
                     .labelsHidden()
                 }
             }
+            .tintedCards()
         }
         .navigationTitle("Indexers")
         .overlay { if isLoading && indexers.isEmpty { ProgressView() } }

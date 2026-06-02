@@ -122,8 +122,10 @@ struct ArtistDetailView: View {
     var body: some View {
         List {
             header
+                .tintedCards()
             if let overview = artist.overview, !overview.isEmpty {
                 Section { Text(overview).font(.subheadline) }
+                    .tintedCards()
             }
             Section {
                 Toggle("Monitored", isOn: Binding(
@@ -143,6 +145,7 @@ struct ArtistDetailView: View {
                     Label("Delete Artist", systemImage: "trash")
                 }
             }
+            .tintedCards()
             Section("Albums") {
                 if model.isLoading { ProgressView() }
                 ForEach(model.albums) { album in
@@ -155,6 +158,7 @@ struct ArtistDetailView: View {
                     )
                 }
             }
+            .tintedCards()
         }
         .navigationTitle(artist.artistName)
         .task {
@@ -242,8 +246,10 @@ private struct AlbumReleasesView: View {
         List {
             if model.isSearchingReleases {
                 HStack { Spacer(); ProgressView(); Spacer() }
+                    .tintedCards()
             } else if model.releases.isEmpty {
                 Text("No releases found.").foregroundStyle(.secondary)
+                    .tintedCards()
             } else {
                 ForEach(model.releases) { release in
                     ReleaseRowGeneric(
@@ -256,6 +262,7 @@ private struct AlbumReleasesView: View {
                         leechers: release.leechers
                     ) { Task { await model.grab(release) } }
                 }
+                .tintedCards()
             }
         }
         .navigationTitle(album.title)

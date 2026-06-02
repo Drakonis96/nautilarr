@@ -19,6 +19,7 @@ struct AdvancedSettingsView: View {
                     HStack { Text("SSH Timeout"); Spacer(); Text("\(settings.sshTimeout)s").foregroundStyle(.secondary) }
                 }
             }
+            .tintedCards()
 
             Section {
                 Toggle("Auto-Refresh Now Playing", isOn: Binding(
@@ -29,6 +30,7 @@ struct AdvancedSettingsView: View {
             } footer: {
                 Text("Refreshes Tautulli activity on the dashboard every 10 seconds while open.")
             }
+            .tintedCards()
 
             Section {
                 Button(role: .destructive) {
@@ -47,6 +49,7 @@ struct AdvancedSettingsView: View {
             } footer: {
                 Text("Deletes cached posters and artwork. Use this if images look stale.")
             }
+            .tintedCards()
 
             Section {
                 LabeledContent("Secret storage") {
@@ -59,6 +62,7 @@ struct AdvancedSettingsView: View {
                      ? "API keys and passwords are stored in the system Keychain."
                      : "The Keychain is unavailable in this build (e.g. an unsigned/ad-hoc Mac app), so secrets are stored in the app's on-device container instead.")
             }
+            .tintedCards()
         }
         .navigationTitle("Advanced")
     }

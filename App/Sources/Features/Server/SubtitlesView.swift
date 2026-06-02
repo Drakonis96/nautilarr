@@ -24,6 +24,7 @@ struct SubtitlesView: View {
                             BazarrWantedView(instance: instance)
                         } label: { Label(instance.name, systemImage: "captions.bubble") }
                     }
+                    .tintedCards()
                 }
             }
         }

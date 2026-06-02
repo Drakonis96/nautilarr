@@ -57,9 +57,12 @@ struct GlobalSearchView: View {
                                 Text("Search your library, or press return to find new titles to add.")
                                     .foregroundStyle(.secondary).font(.subheadline)
                             }
+                            .tintedCards()
                         } else {
                             librarySection
+                                .tintedCards()
                             addSection
+                                .tintedCards()
                         }
                     }
                 }

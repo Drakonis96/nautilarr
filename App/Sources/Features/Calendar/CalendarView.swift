@@ -35,6 +35,13 @@ struct CalendarView: View {
         .overlay { if model.isLoading && model.allEntries.isEmpty { ProgressView() } }
         .refreshable { await model.load(store: instanceStore) }
         .task { await model.load(store: instanceStore) }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                RefreshSpinnerButton(isLoading: model.isLoading) {
+                    Task { await model.load(store: instanceStore) }
+                }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .nautilarrRefresh)) { _ in
             Task { await model.load(store: instanceStore) }
         }
@@ -75,9 +82,11 @@ struct CalendarView: View {
                 } header: {
                     Text(day.date, format: .dateTime.weekday(.wide).month().day())
                 }
+                .tintedCards()
             }
             if model.days.isEmpty && !model.isLoading {
                 Text("Nothing scheduled.").foregroundStyle(.secondary)
+                    .tintedCards()
             }
         }
     }

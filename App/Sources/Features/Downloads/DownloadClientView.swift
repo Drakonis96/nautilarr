@@ -203,6 +203,7 @@ struct DownloadClientView: View {
                                 }
                             }
                     }
+                    .tintedCards()
                 }
             }
         }

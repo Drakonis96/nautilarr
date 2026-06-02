@@ -35,6 +35,7 @@ struct DownloadsSettingsView: View {
                 } footer: {
                     Text("Turn a client off to exclude it from the unified queue and stop polling it. It stays configured and can be turned back on here.")
                 }
+                .tintedCards()
             }
 
             Section {
@@ -81,6 +82,7 @@ struct DownloadsSettingsView: View {
             } footer: {
                 Text("Applies to torrent clients (qBittorrent, Transmission, Deluge). When a torrent passes the day and/or ratio limit, Nautilarr runs the chosen action while the Downloads screen is open. Usenet downloads don't seed and are never affected.")
             }
+            .tintedCards()
         }
         .navigationTitle("Downloads")
     }

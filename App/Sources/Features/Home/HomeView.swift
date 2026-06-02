@@ -18,82 +18,98 @@ struct HomeView: View {
     @AppStorage("homeServicesGrid") private var servicesGrid = true
 
     private var isMac: Bool { ProcessInfo.processInfo.isMacCatalystApp }
-    private let refreshThreshold: CGFloat = 110
-    private let restingHeight: CGFloat = 122
-    @State private var pullOffset: CGFloat = 0
+    private let pullThreshold: CGFloat = 100
     @State private var isRefreshing = false
     @State private var armed = false
+    /// Submarine dive depth (0 = floating at the surface, 1 = deepest). Driven by
+    /// EITHER dragging the submarine directly OR pulling the whole page down.
+    @State private var diveDepth: CGFloat = 0
+    /// When the slow chain haul-up began (on release), and the depth it started
+    /// from. The rise is time-driven inside the overlay so it stays smooth.
+    @State private var riseStart: Date?
+    @State private var riseFrom: CGFloat = 0
+    private let riseDuration: Double = 2.6
 
     private func refresh() async {
         await model.load(store: instanceStore)
         environment.activeDownloadCount = model.downloads.count
     }
 
-    /// Pull distance, normalised (0…~1.3) for the visual.
-    private var pullProgress: CGFloat { min(1.3, max(0, pullOffset) / refreshThreshold) }
+    /// Vertical room reserved at the top of the scroll content so the dashboard
+    /// sits below the fixed ocean overlay (waves + the resting submarine).
+    private let headerClearance: CGFloat = 88
 
-    /// Header height: a tall resting submarine that grows generously as you pull,
-    /// holding a touch taller while refreshing (room for the bounce).
-    private var indicatorHeight: CGFloat {
-        if isRefreshing { return refreshThreshold + 50 }
-        return max(restingHeight, min(pullOffset * 1.1, refreshThreshold + 50))
+    /// Classic pull-to-refresh: pulling the whole page down lowers the submarine
+    /// (the page itself bounces as usual). Arm past the threshold; on release
+    /// (offset returning) the chain hauls the sub up slowly.
+    private func handleScrollPull(_ offset: CGFloat) {
+        guard !isMac, !isRefreshing else { return }
+        diveDepth = min(1, max(0, offset / pullThreshold))
+        if offset >= pullThreshold {
+            armed = true
+        } else if armed {
+            armed = false
+            startRise()
+        }
     }
 
-    private func handlePull(_ value: CGFloat) {
-        guard !isMac, !isRefreshing else { return }
-        pullOffset = max(0, value)
-        if pullOffset >= refreshThreshold && !armed {
-            armed = true
-            Task { @MainActor in
-                withAnimation(.spring(response: 0.45, dampingFraction: 0.7)) { isRefreshing = true }
-                await refresh()
-                withAnimation(.spring(response: 0.55, dampingFraction: 0.85)) { isRefreshing = false; pullOffset = 0 }
-            }
-        } else if pullOffset < 8 {
-            armed = false
+    /// The slow chain haul-up + a full dashboard refresh, time-driven inside the
+    /// overlay so it stays smooth.
+    private func startRise() {
+        guard !isRefreshing, diveDepth >= 0.4 else { diveDepth = 0; return }
+        riseFrom = diveDepth
+        riseStart = Date()
+        isRefreshing = true
+        Task { @MainActor in
+            async let reload: Void = refresh()
+            try? await Task.sleep(nanoseconds: UInt64(riseDuration * 1_000_000_000))
+            await reload
+            riseStart = nil
+            diveDepth = 0
+            isRefreshing = false
         }
     }
 
     private var baseScroll: some View {
         ScrollView {
             VStack(spacing: 0) {
-                // The submarine sits at the top of Home (touch devices). It grows
-                // and sails as you pull down to refresh, then bounces on the swell.
+                // Clear room at the top for the fixed ocean overlay (the submarine
+                // hanging from the Dynamic Island). The overlay itself is drawn in
+                // `body` so it can reach up into the top safe area.
                 if !isMac {
-                    OceanRefreshIndicator(progress: pullProgress, refreshing: isRefreshing, accent: settings.accent.color)
-                        .frame(height: indicatorHeight)
-                        .animation(.spring(response: 0.45, dampingFraction: 0.7), value: isRefreshing)
+                    Color.clear.frame(height: headerClearance)
                 }
                 dashboard
             }
-            .background(
-                GeometryReader { geo in
-                    Color.clear.preference(key: HomePullKey.self,
-                                           value: max(0, geo.frame(in: .named("homeScroll")).minY))
-                }
-            )
         }
-        .coordinateSpace(name: "homeScroll")
     }
 
-    /// Uses the reliable iOS 18+ scroll-offset reader (correct even with a large
-    /// navigation title — the old preference reader barely moved), falling back
-    /// to the preference reader on older systems.
+    /// `baseScroll`, plus the classic pull-to-refresh reader on iOS 18+ that
+    /// drives the submarine's dive from the scroll offset.
     @ViewBuilder
     private var pullableScroll: some View {
         if #available(iOS 18.0, macCatalyst 18.0, *) {
             baseScroll.onScrollGeometryChange(for: CGFloat.self) { geo in
                 max(0, -(geo.contentOffset.y + geo.contentInsets.top))
-            } action: { _, newValue in
-                handlePull(newValue)
-            }
+            } action: { _, newValue in handleScrollPull(newValue) }
         } else {
-            baseScroll.onPreferenceChange(HomePullKey.self) { handlePull($0) }
+            baseScroll
         }
     }
 
     var body: some View {
         pullableScroll
+        // Fixed ocean overlay: the submarine hangs from a chain that drops from
+        // the Dynamic Island. Ignoring the top safe area lets the chain's origin
+        // tuck behind the island. Pulling the page dives the sub; tapping the sub
+        // gives the captain a line.
+        .overlay(alignment: .top) {
+            if !isMac {
+                OceanHeader(dive: diveDepth, riseStart: riseStart, riseFrom: riseFrom,
+                            refreshing: isRefreshing, accent: settings.accent.color)
+                    .ignoresSafeArea(edges: .top)
+            }
+        }
         .navigationDestination(for: MediaEntry.self) { entry in
             switch entry {
             case let .series(instance, series):
@@ -124,14 +140,11 @@ struct HomeView: View {
             if instanceStore.networks.count > 1 {
                 ToolbarItem(placement: .topBarLeading) { NetworkSwitcher() }
             }
-            // On touch devices the submarine pull-to-refresh replaces this; keep
-            // the explicit button on Mac, where there's no rubber-band pull.
-            if isMac {
-                ToolbarItem(placement: .primaryAction) {
-                    Button { Task { await refresh() } } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise")
-                    }
-                    .disabled(model.isLoading)
+            // A discoverable refresh affordance in the corner, for anyone who
+            // doesn't realise they can drag the submarine down.
+            ToolbarItem(placement: .primaryAction) {
+                RefreshSpinnerButton(isLoading: model.isLoading) {
+                    Task { await refresh() }
                 }
             }
         }

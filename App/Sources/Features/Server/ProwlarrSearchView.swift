@@ -22,11 +22,14 @@ struct ProwlarrSearchView: View {
             List {
                 if isSearching {
                     HStack { Spacer(); ProgressView(); Spacer() }
+                        .tintedCards()
                 } else if didSearch && results.isEmpty {
                     Text("No results.").foregroundStyle(.secondary)
+                        .tintedCards()
                 } else if !didSearch {
                     Text("Type above to search your indexers for any release.")
                         .foregroundStyle(.secondary).font(.subheadline)
+                        .tintedCards()
                 }
                 ForEach(results) { result in
                     ReleaseRowGeneric(
@@ -39,6 +42,7 @@ struct ProwlarrSearchView: View {
                         leechers: result.leechers
                     ) { Task { await grab(result) } }
                 }
+                .tintedCards()
             }
         }
         .navigationTitle(instance.name)

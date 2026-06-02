@@ -82,106 +82,177 @@ enum BackgroundPalette: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    /// The pastel hue used for the wash. `nil` for `.system`.
-    var pastel: Color? {
+    /// Light-mode RGB of the hue. `nil` for `.system`. Single source of truth for
+    /// both the settings swatch and the live background colour.
+    private var rgb: (red: Double, green: Double, blue: Double)? {
         switch self {
         case .system: return nil
-        case .teal:   return Color(red: 0.55, green: 0.86, blue: 0.83)
-        case .blue:   return Color(red: 0.66, green: 0.82, blue: 0.98)
-        case .indigo: return Color(red: 0.71, green: 0.74, blue: 0.97)
-        case .purple: return Color(red: 0.82, green: 0.73, blue: 0.96)
-        case .pink:   return Color(red: 0.98, green: 0.76, blue: 0.88)
-        case .rose:   return Color(red: 0.98, green: 0.74, blue: 0.74)
-        case .peach:  return Color(red: 0.99, green: 0.83, blue: 0.69)
-        case .mint:   return Color(red: 0.70, green: 0.92, blue: 0.78)
+        case .teal:   return (0.55, 0.86, 0.83)
+        case .blue:   return (0.66, 0.82, 0.98)
+        case .indigo: return (0.71, 0.74, 0.97)
+        case .purple: return (0.82, 0.73, 0.96)
+        case .pink:   return (0.98, 0.76, 0.88)
+        case .rose:   return (0.98, 0.74, 0.74)
+        case .peach:  return (0.99, 0.83, 0.69)
+        case .mint:   return (0.70, 0.92, 0.78)
         }
     }
 
-    /// Whether a custom (non-system) wash is active.
-    var isCustom: Bool { pastel != nil }
-
-    /// A `ShapeStyle` for the wash, used as a `containerBackground` on the
-    /// navigation stack so it shows behind *every* screen (root and pushed) —
-    /// drawn over the system background, so it adapts to light/dark. `nil` for
-    /// `.system`.
-    var containerStyle: AnyShapeStyle? {
-        guard let pastel else { return nil }
-        return AnyShapeStyle(
-            LinearGradient(
-                colors: [pastel.opacity(0.62), pastel.opacity(0.36)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
+    /// The hue as a plain colour (used for the settings swatch preview).
+    var pastel: Color? {
+        guard let rgb else { return nil }
+        return Color(red: rgb.red, green: rgb.green, blue: rgb.blue)
     }
 
-    /// A full-bleed background that adapts to light/dark: the system background
-    /// (so text contrast is preserved) with the pastel hue layered on top. The
-    /// tint is deliberately strong enough to read clearly as a colour (grouped
-    /// "cards" stay legible on top), unlike the old near-invisible wash.
+    /// Whether a custom (non-system) colour is active.
+    var isCustom: Bool { rgb != nil }
+
+    /// A **solid**, scheme-adaptive background colour. It plays the exact role
+    /// the grey `systemGroupedBackground` plays for `.system`: a flat fill behind
+    /// the screen, with the grouped "cards" staying white on top. The tint is
+    /// kept deliberately **soft** — a gentle wash like the system grey, not a
+    /// saturated colour — so the white cards still read clearly. In light mode
+    /// it's a pale tint of the hue; in dark mode it's a deep, muted version.
+    /// `nil` for `.system`.
+    var solidColor: Color? {
+        guard let rgb else { return nil }
+        return Color(uiColor: UIColor { traits in
+            if traits.userInterfaceStyle == .dark {
+                // Blend the hue toward near-black so the background reads as a
+                // softly-tinted dark surface (cards stay legible on top).
+                let t = 0.86, base = 0.05
+                return UIColor(red: rgb.red * (1 - t) + base * t,
+                               green: rgb.green * (1 - t) + base * t,
+                               blue: rgb.blue * (1 - t) + base * t, alpha: 1)
+            }
+            // Blend the hue toward near-white so it's a soft, subtle tint
+            // (mirroring how the system grouped grey is barely-there).
+            let t = 0.60, base = 0.98
+            return UIColor(red: rgb.red * (1 - t) + base * t,
+                           green: rgb.green * (1 - t) + base * t,
+                           blue: rgb.blue * (1 - t) + base * t, alpha: 1)
+        })
+    }
+
+    /// The card ("globo") colour shown on top of the tinted background. Rather
+    /// than near-white (which read as ugly white blobs on a soft tint), the card
+    /// carries a **clearly visible tint** of the same hue — a colour panel a bit
+    /// more saturated than the background, so the whole screen reads as one
+    /// cohesive monochrome palette. The rounded grouped-list shape + separators
+    /// keep the cards distinct. In dark mode it's a tinted dark surface, kept
+    /// lighter than the background so cards lift. `nil` for `.system`.
+    var cardColor: Color? {
+        guard let rgb else { return nil }
+        return Color(uiColor: UIColor { traits in
+            if traits.userInterfaceStyle == .dark {
+                let t = 0.74, base = 0.16
+                return UIColor(red: rgb.red * (1 - t) + base * t,
+                               green: rgb.green * (1 - t) + base * t,
+                               blue: rgb.blue * (1 - t) + base * t, alpha: 1)
+            }
+            let t = 0.32, base = 1.0
+            return UIColor(red: rgb.red * (1 - t) + base * t,
+                           green: rgb.green * (1 - t) + base * t,
+                           blue: rgb.blue * (1 - t) + base * t, alpha: 1)
+        })
+    }
+
+    /// A full-bleed solid background that replaces the grey grouped background
+    /// with the selected colour. `.system` keeps the plain (transparent) one.
     @ViewBuilder
     var backgroundView: some View {
-        if let pastel {
-            PastelBackground(pastel: pastel)
+        if let solidColor {
+            solidColor.ignoresSafeArea()
         } else {
             Color.clear
         }
     }
 }
 
-/// The pastel wash, adapting its strength to light/dark so the colour is clearly
-/// visible in light mode without washing out text in dark mode.
-private struct PastelBackground: View {
-    let pastel: Color
-    @Environment(\.colorScheme) private var scheme
-
-    var body: some View {
-        let top = scheme == .dark ? 0.50 : 0.85
-        let bottom = scheme == .dark ? 0.26 : 0.55
-        ZStack {
-            Rectangle().fill(Color(uiColor: .systemBackground))
-            LinearGradient(
-                colors: [pastel.opacity(top), pastel.opacity(bottom)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+extension View {
+    /// Tints a screen's background with the selected colour (no-op for `.system`)
+    /// while keeping the grouped "cards" white — exactly like the grey `.system`
+    /// default, but in the chosen hue.
+    ///
+    /// Applied to the **root content of each screen** (including pushed views, in
+    /// a cascade), so the tint shows uniformly regardless of whether the screen is
+    /// a `List`/`Form`, a `ScrollView` or a plain stack: `.background()` paints the
+    /// tint directly behind the content, and `scrollContentBackground(.hidden)`
+    /// makes any scrollable container transparent so the tint shows through while
+    /// the cells keep their own (white) background.
+    ///
+    /// Takes the palette as a parameter (rather than reading it from the
+    /// environment inside a `ViewModifier`) so it updates **live**: the caller is
+    /// a `View` that already re-renders when `AppSettings` publishes.
+    @ViewBuilder
+    func appBackground(_ palette: BackgroundPalette) -> some View {
+        if palette.isCustom {
+            self
+                .scrollContentBackground(.hidden)
+                // Force the content to fill the screen so the tint covers the
+                // whole background — otherwise `.background()` only spans the
+                // content's own bounds (e.g. a small centred empty-state view),
+                // leaving the rest of the screen its default colour.
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(palette.backgroundView)
+        } else {
+            self
         }
-        .ignoresSafeArea()
+    }
+
+    /// Forces the tab bar and navigation bar to use the tinted background colour
+    /// *consistently*, instead of iOS's default of flipping between an opaque
+    /// material (when content scrolls under the bar) and a transparent edge
+    /// appearance (showing the tint only at the scroll edge). Without this the
+    /// bottom tab bar looks white while scrolling and tinted at the bottom.
+    /// No-op for `.system`.
+    @ViewBuilder
+    func themedBars(_ palette: BackgroundPalette) -> some View {
+        if let color = palette.solidColor {
+            // Only the tab bar is forced to the tint; the navigation bar keeps its
+            // default behaviour (transparent at the scroll edge) so there's no
+            // hairline separator under the large title — letting the Home ocean
+            // meet the title seamlessly.
+            self
+                .toolbarBackground(color, for: .tabBar)
+                .toolbarBackground(.visible, for: .tabBar)
+        } else {
+            self
+        }
+    }
+}
+
+// MARK: - Card ("globo") tint
+
+/// The soft card colour to apply to grouped list rows, injected at the app root
+/// from the chosen `BackgroundPalette` and read by `.tintedCards()`. `nil` keeps
+/// the default system card colour (`.system` background).
+private struct CardTintKey: EnvironmentKey {
+    static let defaultValue: Color? = nil
+}
+
+extension EnvironmentValues {
+    var cardTint: Color? {
+        get { self[CardTintKey.self] }
+        set { self[CardTintKey.self] = newValue }
+    }
+}
+
+private struct TintedCardsModifier: ViewModifier {
+    @Environment(\.cardTint) private var tint
+    func body(content: Content) -> some View {
+        content.listRowBackground(tint)
     }
 }
 
 extension View {
-    /// Tints the screen with the selected pastel background (no-op for `.system`)
-    /// and makes its scrollable container transparent so the wash shows through.
-    ///
-    /// Takes the palette as a parameter (rather than reading it from the
-    /// environment inside a `ViewModifier`) so it updates **live**: the caller is
-    /// a `View` that already re-renders when `AppSettings` publishes, whereas a
-    /// `ViewModifier` reading `@EnvironmentObject` could lag a navigation cycle.
-    @ViewBuilder
-    func appBackground(_ palette: BackgroundPalette) -> some View {
-        self
-            .scrollContentBackground(palette.isCustom ? .hidden : .automatic)
-            .background(palette.backgroundView)
-    }
-
-    /// Sets the pastel wash as the **navigation container's** background so it is
-    /// visible behind every screen — including pushed views — on iPhone, where a
-    /// plain `.background()` behind the `NavigationStack` is hidden by the
-    /// navigation controller's own opaque background. Apply to the root content
-    /// *inside* a `NavigationStack` (paired with `scrollContentBackground(.hidden)`
-    /// on the stack so the lists are transparent).
-    @ViewBuilder
-    func navigationWash(_ palette: BackgroundPalette) -> some View {
-        if let style = palette.containerStyle {
-            if #available(iOS 18.0, macCatalyst 18.0, *) {
-                self.containerBackground(style, for: .navigation)
-            } else {
-                self.background(palette.backgroundView)
-            }
-        } else {
-            self
-        }
+    /// Tints grouped list rows ("cards") with the app's soft card colour (read
+    /// from the environment, injected at the app root from the chosen palette),
+    /// so the cards harmonise with the tinted background instead of reading as
+    /// hard white blobs. Apply to a `List`/`Form`; it propagates to every row.
+    /// A `nil` tint (the `.system` background) keeps the default card colour.
+    func tintedCards() -> some View {
+        modifier(TintedCardsModifier())
     }
 }
 

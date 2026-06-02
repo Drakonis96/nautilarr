@@ -22,6 +22,7 @@ struct SecuritySettingsView: View {
     var body: some View {
         Form {
             appLockSection
+                .tintedCards()
             Section {
                 Toggle("Face ID for SSH", isOn: Binding(
                     get: { settings.faceIDForSSH }, set: { settings.faceIDForSSH = $0 }
@@ -39,6 +40,7 @@ struct SecuritySettingsView: View {
                      ? "Biometrics stay on device. Nautilarr never stores your biometric data."
                      : "No biometrics are enrolled on this device; these gates will be skipped.")
             }
+            .tintedCards()
         }
         .navigationTitle("Security")
         .alert("Set master password", isPresented: $showSet) {

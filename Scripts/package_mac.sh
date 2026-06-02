@@ -30,8 +30,15 @@ codesign --force --deep --sign - "${APP_PATH}"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "${APP_PATH}/Contents/Info.plist" 2>/dev/null \
   || /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "${APP_PATH}/Info.plist")"
 
-ZIP="${OUT_DIR}/Nautilarr-macOS-${VERSION}.zip"
-echo "▸ Zipping to ${ZIP}…"
-ditto -c -k --keepParent "${APP_PATH}" "${ZIP}"
+DMG="${OUT_DIR}/Nautilarr-macOS-${VERSION}.dmg"
+echo "▸ Building DMG ${DMG}…"
+STAGING="${BUILD_DIR}/dmg"
+rm -rf "${STAGING}"
+mkdir -p "${STAGING}"
+cp -R "${APP_PATH}" "${STAGING}/"
+# A drag-to-install shortcut to /Applications — the standard macOS DMG layout.
+ln -s /Applications "${STAGING}/Applications"
+rm -f "${DMG}"
+hdiutil create -volname "Nautilarr" -srcfolder "${STAGING}" -ov -format UDZO "${DMG}"
 
-echo "✓ Wrote ${ZIP}"
+echo "✓ Wrote ${DMG}"

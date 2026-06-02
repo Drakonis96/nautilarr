@@ -85,7 +85,7 @@ jobs:
         with:
           files: |
             dist/Nautilarr-${{ steps.meta.outputs.version }}.ipa
-            dist/Nautilarr-macOS-${{ steps.meta.outputs.version }}.zip
+            dist/Nautilarr-macOS-${{ steps.meta.outputs.version }}.dmg
           generate_release_notes: true
 
       - name: Upload Pages artifact

@@ -132,12 +132,14 @@ struct LibraryItemEditView: View {
                 Section {
                     Toggle("Monitored", isOn: $model.monitored)
                 }
+                .tintedCards()
                 Section("Quality Profile") {
                     Picker("Quality Profile", selection: $model.qualityProfileId) {
                         Text("Unchanged").tag(Int?.none)
                         ForEach(model.qualityProfiles) { Text($0.name).tag(Int?.some($0.id)) }
                     }
                 }
+                .tintedCards()
                 if model.isArtist && !model.metadataProfiles.isEmpty {
                     Section("Metadata Profile") {
                         Picker("Metadata Profile", selection: $model.metadataProfileId) {
@@ -145,6 +147,7 @@ struct LibraryItemEditView: View {
                             ForEach(model.metadataProfiles) { Text($0.name).tag(Int?.some($0.id)) }
                         }
                     }
+                    .tintedCards()
                 }
                 if !model.rootFolders.isEmpty {
                     Section("Root Folder") {
@@ -156,6 +159,7 @@ struct LibraryItemEditView: View {
                             Toggle("Move files now", isOn: $model.moveFiles)
                         }
                     }
+                    .tintedCards()
                 }
             }
             .navigationTitle("Edit \(model.entry.title)")

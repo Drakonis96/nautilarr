@@ -36,23 +36,28 @@ struct RequestOptionsView: View {
         NavigationStack {
             Form {
                 header
-                if let error { Section { ErrorBanner(message: error) } }
+                    .tintedCards()
+                if let error { Section { ErrorBanner(message: error) }.tintedCards() }
 
                 if !servers.isEmpty {
                     serverSection
+                        .tintedCards()
                     qualitySection
+                        .tintedCards()
                     rootFolderSection
-                    if isTV { languageSection }
+                        .tintedCards()
+                    if isTV { languageSection.tintedCards() }
                 } else if isLoading {
-                    Section { HStack { Spacer(); ProgressView(); Spacer() } }
+                    Section { HStack { Spacer(); ProgressView(); Spacer() } }.tintedCards()
                 } else {
                     Section {
                         Label("Using Overseerr's default server and profiles.", systemImage: "info.circle")
                             .font(.footnote).foregroundStyle(.secondary)
                     }
+                    .tintedCards()
                 }
 
-                if isTV { seasonsSection }
+                if isTV { seasonsSection.tintedCards() }
             }
             .navigationTitle("Request")
             .navigationBarTitleDisplayMode(.inline)

@@ -6,6 +6,18 @@ import SwiftUI
 struct NautilarrApp: App {
     @StateObject private var environment = AppEnvironment()
 
+    init() {
+        // Remove the hairline separator under navigation bars so the Home ocean
+        // header meets the title seamlessly (and the chrome looks cleaner).
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.shadowColor = .clear
+        let bar = UINavigationBar.appearance()
+        bar.standardAppearance.shadowColor = .clear
+        bar.scrollEdgeAppearance = appearance
+        bar.compactAppearance?.shadowColor = .clear
+    }
+
     var body: some Scene {
         WindowGroup {
             AppRootView()
@@ -66,6 +78,9 @@ private struct AppRootView: View {
         .tint(settings.accent.color)
         .preferredColorScheme(settings.colorScheme.swiftUIScheme)
         .dynamicTypeSize(settings.textSize.dynamicTypeSize)
+        // Soft tint for grouped list rows ("cards"), read by `.tintedCards()` on
+        // every List/Form so the cards harmonise with the tinted background.
+        .environment(\.cardTint, settings.background.cardColor)
         // Driving the locale through the environment re-resolves every `Text`
         // against the newly-selected localization *in place* — without rebuilding
         // the view tree. Crucially, this preserves navigation state (the user

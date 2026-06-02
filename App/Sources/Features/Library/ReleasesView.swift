@@ -36,6 +36,7 @@ struct ReleasesView: View {
         List {
             if episode.hasFile == true, let file = episode.episodeFile, let m = Self.meta(file), m.hasAny {
                 Section("Current File") { FileInfoRows(meta: m) }
+                    .tintedCards()
             }
             Section {
                 if isLoading {
@@ -51,6 +52,7 @@ struct ReleasesView: View {
             } header: {
                 if !releases.isEmpty { Text("\(displayed.count) releases") }
             }
+            .tintedCards()
         }
         .navigationTitle(episode.seasonEpisodeCode)
         .toolbar {

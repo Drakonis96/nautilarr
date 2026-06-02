@@ -32,4 +32,14 @@ public enum Credential: Codable, Equatable, Sendable {
             return username.isEmpty && (password?.isEmpty ?? true) && (privateKey?.isEmpty ?? true)
         }
     }
+
+    /// The `Authorization: Basic …` header value for a `usernamePassword`
+    /// credential (used for HTTP Basic Auth, e.g. a reverse proxy in front of a
+    /// service). `nil` for other cases or when empty.
+    public var basicAuthHeaderValue: String? {
+        guard case let .usernamePassword(username, password) = self,
+              !(username.isEmpty && password.isEmpty) else { return nil }
+        let token = Data("\(username):\(password)".utf8).base64EncodedString()
+        return "Basic \(token)"
+    }
 }

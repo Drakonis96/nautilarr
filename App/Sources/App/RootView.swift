@@ -67,9 +67,9 @@ private struct CompactRootView: View {
                 NavigationStack {
                     destination.rootView
                         .navigationTitle(LocalizedStringKey(destination.title))
-                        .navigationWash(settings.background)
+                        .appBackground(settings.background)
+                        .themedBars(settings.background)
                 }
-                .scrollContentBackground(settings.background.isCustom ? .hidden : .automatic)
                 .tabItem { destination.navLabel }
                 .badge(destination.showsActivityBadge ? environment.activeDownloadCount : 0)
                 .tag(CompactTab.destination(destination))
@@ -77,9 +77,9 @@ private struct CompactRootView: View {
             if !overflow.isEmpty {
                 NavigationStack {
                     MoreView(destinations: overflow)
-                        .navigationWash(settings.background)
+                        .appBackground(settings.background)
+                        .themedBars(settings.background)
                 }
-                .scrollContentBackground(settings.background.isCustom ? .hidden : .automatic)
                 .tabItem { Label("More", systemImage: "ellipsis.circle") }
                 .badge(overflowBadge)
                 .tag(CompactTab.more)
@@ -107,13 +107,14 @@ private struct MoreView: View {
                 NavigationLink {
                     destination.rootView
                         .navigationTitle(LocalizedStringKey(destination.title))
+                        .appBackground(settings.background)
                 } label: {
                     destination.navLabel
                         .badge(destination.showsActivityBadge ? environment.activeDownloadCount : 0)
                 }
             }
+            .tintedCards()
         }
-        .scrollContentBackground(settings.background.isCustom ? .hidden : .automatic)
         .navigationTitle("More")
     }
 }

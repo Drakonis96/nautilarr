@@ -351,8 +351,10 @@ struct SSHDetailView: View {
         List {
             if !model.dockerAvailable {
                 Text("Docker is not available on this host.").foregroundStyle(.secondary)
+                    .tintedCards()
             } else if model.dockerContainers.isEmpty {
                 Text("No containers.").foregroundStyle(.secondary)
+                    .tintedCards()
             } else {
                 ForEach(model.dockerContainers) { container in
                     HStack(spacing: 10) {
@@ -380,6 +382,7 @@ struct SSHDetailView: View {
                         }
                     }
                 }
+                .tintedCards()
             }
         }
         .refreshable { await model.loadDocker() }
@@ -427,6 +430,7 @@ struct SSHDetailView: View {
                     Button("Up") { Task { await model.goUp() } }.font(.caption)
                 }
             }
+            .tintedCards()
             ForEach(model.entries) { entry in
                 Button { Task { await model.open(entry) } } label: {
                     HStack {
@@ -441,6 +445,7 @@ struct SSHDetailView: View {
                 }
                 .buttonStyle(.plain)
             }
+            .tintedCards()
         }
         .sheet(isPresented: Binding(get: { model.viewingFile != nil }, set: { if !$0 { model.viewingFile = nil } })) {
             NavigationStack {

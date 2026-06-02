@@ -79,9 +79,9 @@ struct BazarrWantedView: View {
             .padding(.bottom, 8)
 
             List {
-                if let error { Section { ErrorBanner(message: error) } }
+                if let error { Section { ErrorBanner(message: error) }.tintedCards() }
                 if tab == .episodes {
-                    if filteredEpisodes.isEmpty && !isLoading { emptyRow("No episodes missing subtitles.") }
+                    if filteredEpisodes.isEmpty && !isLoading { emptyRow("No episodes missing subtitles.").tintedCards() }
                     ForEach(filteredEpisodes) { episode in
                         WantedRow(
                             title: episode.seriesTitle ?? "Series",
@@ -94,8 +94,9 @@ struct BazarrWantedView: View {
                                 subtitle: [episode.episodeNumber, episode.episodeTitle].compactMap { $0 }.joined(separator: " · ")),
                             present: { searchRequest = $0 })
                     }
+                    .tintedCards()
                 } else {
-                    if filteredMovies.isEmpty && !isLoading { emptyRow("No movies missing subtitles.") }
+                    if filteredMovies.isEmpty && !isLoading { emptyRow("No movies missing subtitles.").tintedCards() }
                     ForEach(filteredMovies) { movie in
                         WantedRow(
                             title: movie.title ?? "Movie",
@@ -104,6 +105,7 @@ struct BazarrWantedView: View {
                             target: .movie(radarrId: movie.radarrId ?? 0, title: movie.title ?? "Movie"),
                             present: { searchRequest = $0 })
                     }
+                    .tintedCards()
                 }
             }
         }
