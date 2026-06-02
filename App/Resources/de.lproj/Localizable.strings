@@ -1,0 +1,204 @@
+/* Nautilarr — Deutsch */
+
+/* Navigation */
+"Home" = "Start";
+"Library" = "Bibliothek";
+"Calendar" = "Kalender";
+"Search" = "Suchen";
+"Downloads" = "Downloads";
+"Requests" = "Anfragen";
+"Indexers" = "Indexer";
+"Subtitles" = "Untertitel";
+"Server" = "Server";
+"Settings" = "Einstellungen";
+
+/* Common */
+"Done" = "Fertig";
+"Cancel" = "Abbrechen";
+"Add" = "Hinzufügen";
+"Edit" = "Bearbeiten";
+"Edit…" = "Bearbeiten…";
+"Delete" = "Löschen";
+"Save" = "Sichern";
+"Refresh" = "Aktualisieren";
+"Open" = "Öffnen";
+"Remove" = "Entfernen";
+"Select" = "Auswählen";
+"All" = "Alle";
+"None" = "Keine";
+"Later" = "Später";
+"Download" = "Herunterladen";
+"Actions" = "Aktionen";
+"Status" = "Status";
+"Service" = "Dienst";
+"Quality" = "Qualität";
+"Genre" = "Genre";
+"Genres" = "Genres";
+"Clear Filters" = "Filter zurücksetzen";
+
+/* Home */
+"Services" = "Dienste";
+"Library Statistics" = "Bibliotheksstatistik";
+"Currently Playing" = "Läuft gerade";
+"Upcoming Releases" = "Kommende Veröffentlichungen";
+"Health" = "Systemzustand";
+"Active Downloads" = "Aktive Downloads";
+"All systems healthy" = "Alles in Ordnung";
+"Queue is empty" = "Warteschlange ist leer";
+"Series" = "Serien";
+"Movies" = "Filme";
+"Artists" = "Künstler";
+"Files" = "Dateien";
+"Library Size" = "Bibliotheksgröße";
+"No services yet" = "Noch keine Dienste";
+
+/* Library */
+"Filter library" = "Bibliothek filtern";
+"Filter & Sort" = "Filtern & Sortieren";
+"Sort" = "Sortieren";
+"Filter" = "Filter";
+"Columns" = "Spalten";
+"Automatic" = "Automatisch";
+"Grid View" = "Rasteransicht";
+"List View" = "Listenansicht";
+"Monitored" = "Überwacht";
+"Automatic Search" = "Automatische Suche";
+"Interactive Search" = "Interaktive Suche";
+"Refresh & Scan" = "Aktualisieren & Scannen";
+"Monitor" = "Überwachen";
+"Unmonitor" = "Nicht überwachen";
+"Remove from library" = "Aus Bibliothek entfernen";
+"Remove and delete files" = "Entfernen und Dateien löschen";
+"No library" = "Keine Bibliothek";
+"All Services" = "Alle Dienste";
+"All Qualities" = "Alle Qualitäten";
+"All Genres" = "Alle Genres";
+"All Statuses" = "Alle Status";
+"View" = "Ansicht";
+
+/* Detail */
+"Overview" = "Übersicht";
+"Details" = "Details";
+"Cast" = "Besetzung";
+"Network" = "Sender";
+"Studio" = "Studio";
+"Runtime" = "Laufzeit";
+"Certification" = "Altersfreigabe";
+"Size on disk" = "Größe auf Datenträger";
+"Episodes" = "Folgen";
+"Delete Movie" = "Film löschen";
+"Delete Series" = "Serie löschen";
+"Season" = "Staffel";
+"Specials" = "Specials";
+"Releases" = "Veröffentlichungen";
+"Rating" = "Bewertung";
+
+/* Downloads */
+"All status" = "Alle Status";
+"Downloading" = "Lädt herunter";
+"Seeding" = "Seeden";
+"Completed" = "Abgeschlossen";
+"Queued" = "In Warteschlange";
+"Paused" = "Pausiert";
+"Error" = "Fehler";
+"Pause All" = "Alle pausieren";
+"Resume All" = "Alle fortsetzen";
+"Recheck" = "Erneut prüfen";
+"Resume" = "Fortsetzen";
+"Pause" = "Pausieren";
+"No downloads" = "Keine Downloads";
+"Nothing here" = "Nichts hier";
+"Remove from queue only" = "Nur aus Warteschlange entfernen";
+"Remove and delete from disk" = "Entfernen und vom Datenträger löschen";
+"Progress" = "Fortschritt";
+"Name" = "Name";
+"Size" = "Größe";
+"Seed time" = "Seed-Dauer";
+
+/* Calendar */
+"Downloaded" = "Heruntergeladen";
+"Missing" = "Fehlt";
+"Upcoming" = "Kommend";
+"All Media" = "Alle Medien";
+"Monitored only" = "Nur überwachte";
+"Nothing scheduled." = "Nichts geplant.";
+"No calendar" = "Kein Kalender";
+
+/* Requests */
+"Discover" = "Entdecken";
+"Pending" = "Ausstehend";
+"Approved" = "Genehmigt";
+"Available" = "Verfügbar";
+"Request" = "Anfragen";
+"Approve" = "Genehmigen";
+"Decline" = "Ablehnen";
+"No requests." = "Keine Anfragen.";
+"Destination Server" = "Zielserver";
+"Quality Profile" = "Qualitätsprofil";
+"Root Folder" = "Stammordner";
+"Language Profile" = "Sprachprofil";
+"Seasons" = "Staffeln";
+"All seasons" = "Alle Staffeln";
+"Folder" = "Ordner";
+"Language" = "Sprache";
+
+/* Settings */
+"Networks" = "Netzwerke";
+"Appearance" = "Erscheinungsbild";
+"Notifications" = "Mitteilungen";
+"Security" = "Sicherheit";
+"Advanced" = "Erweitert";
+"Configuration" = "Konfiguration";
+"About" = "Über";
+"Version" = "Version";
+"License" = "Lizenz";
+"Accent Color" = "Akzentfarbe";
+"Background Color" = "Hintergrundfarbe";
+"System" = "System";
+"Light" = "Hell";
+"Dark" = "Dunkel";
+"Theme" = "Design";
+"Text Size" = "Textgröße";
+"Navigation" = "Navigation";
+"Shortcuts" = "Verknüpfungen";
+"Add Service" = "Dienst hinzufügen";
+"Plex / Jellyfin shortcuts" = "Plex / Jellyfin-Verknüpfungen";
+"Seed limit" = "Seed-Limit";
+"Download clients" = "Download-Clients";
+"Limit seeding" = "Seeden begrenzen";
+"By days" = "Nach Tagen";
+"By ratio" = "Nach Ratio";
+"Maximum days" = "Maximale Tage";
+"Maximum ratio" = "Maximale Ratio";
+"When exceeded" = "Bei Überschreitung";
+"Web / IP" = "Web / IP";
+"Native app" = "Native App";
+"App Language" = "App-Sprache";
+
+/* Server */
+"Monitoring" = "Überwachung";
+"Configured services" = "Konfigurierte Dienste";
+"Charts" = "Diagramme";
+"Stats" = "Statistik";
+"Console" = "Konsole";
+"Memory" = "Arbeitsspeicher";
+
+/* Update */
+"Update available" = "Update verfügbar";
+
+/* About */
+"View on GitHub" = "Auf GitHub ansehen";
+
+/* Navigation */
+"More" = "Mehr";
+"Drag to reorder" = "Zum Umsortieren ziehen";
+"Grid view" = "Rasteransicht";
+"List view" = "Listenansicht";
+
+/* Easter egg */
+"Can you stop, please?" = "Kannst du bitte aufhören?";
+"Arrr… stop now." = "Arrr… hör jetzt auf.";
+"That won't help, will it?" = "Das bringt nichts, oder?";
+"Seriously, quit poking me!" = "Ernsthaft, hör auf, mich anzustupsen!";
+"I'm trying to sail here." = "Ich versuche hier zu segeln.";
+"You again? Really?" = "Schon wieder du? Echt jetzt?";

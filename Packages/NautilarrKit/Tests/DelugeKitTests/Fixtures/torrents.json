@@ -1,0 +1,7 @@
+{
+  "result": {
+    "abc123hash": { "name": "Example.Show.S01.1080p", "progress": 42.5, "state": "Downloading", "download_payload_rate": 1048576, "upload_payload_rate": 0, "total_size": 10737418240, "eta": 600 }
+  },
+  "error": null,
+  "id": 1
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "id": 100,
+    "title": "First Album",
+    "artistId": 5,
+    "foreignAlbumId": "mbid-album-1",
+    "albumType": "Album",
+    "releaseDate": "2019-05-01T00:00:00Z",
+    "monitored": true,
+    "images": [],
+    "statistics": { "trackFileCount": 12, "trackCount": 12, "totalTrackCount": 12, "sizeOnDisk": 157286400, "percentOfTracks": 100.0 }
+  },
+  {
+    "id": 101,
+    "title": "Second Album",
+    "artistId": 5,
+    "albumType": "EP",
+    "releaseDate": "2021-02-14T00:00:00Z",
+    "monitored": false,
+    "statistics": { "trackFileCount": 0, "trackCount": 5, "totalTrackCount": 5, "sizeOnDisk": 0, "percentOfTracks": 0.0 }
+  }
+]

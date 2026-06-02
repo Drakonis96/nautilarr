@@ -1,0 +1,223 @@
+/* Nautilarr — Español */
+
+/* Navigation */
+"Home" = "Inicio";
+"Library" = "Biblioteca";
+"Calendar" = "Calendario";
+"Search" = "Buscar";
+"Downloads" = "Descargas";
+"Requests" = "Solicitudes";
+"Indexers" = "Indexadores";
+"Subtitles" = "Subtítulos";
+"Server" = "Servidor";
+"Settings" = "Ajustes";
+
+/* Common */
+"Done" = "Hecho";
+"Cancel" = "Cancelar";
+"Add" = "Añadir";
+"Edit" = "Editar";
+"Edit…" = "Editar…";
+"Delete" = "Eliminar";
+"Save" = "Guardar";
+"Refresh" = "Actualizar";
+"Open" = "Abrir";
+"Remove" = "Quitar";
+"Select" = "Seleccionar";
+"All" = "Todo";
+"None" = "Ninguno";
+"Later" = "Más tarde";
+"Download" = "Descargar";
+"Actions" = "Acciones";
+"Status" = "Estado";
+"Service" = "Servicio";
+"Quality" = "Calidad";
+"Genre" = "Género";
+"Genres" = "Géneros";
+"Clear Filters" = "Limpiar filtros";
+
+/* Home */
+"Services" = "Servicios";
+"Library Statistics" = "Estadísticas de la biblioteca";
+"Currently Playing" = "Reproduciendo ahora";
+"Upcoming Releases" = "Próximos estrenos";
+"Health" = "Estado del sistema";
+"Active Downloads" = "Descargas activas";
+"All systems healthy" = "Todo en orden";
+"Queue is empty" = "La cola está vacía";
+"Series" = "Series";
+"Movies" = "Películas";
+"Artists" = "Artistas";
+"Files" = "Archivos";
+"Library Size" = "Tamaño de la biblioteca";
+"No services yet" = "Aún no hay servicios";
+
+/* Library */
+"Filter library" = "Filtrar biblioteca";
+"Filter & Sort" = "Filtrar y ordenar";
+"Sort" = "Ordenar";
+"Filter" = "Filtrar";
+"Columns" = "Columnas";
+"Automatic" = "Automático";
+"Grid View" = "Vista en cuadrícula";
+"List View" = "Vista en lista";
+"Monitored" = "Monitorizado";
+"Automatic Search" = "Búsqueda automática";
+"Interactive Search" = "Búsqueda interactiva";
+"Refresh & Scan" = "Actualizar y escanear";
+"Monitor" = "Monitorizar";
+"Unmonitor" = "No monitorizar";
+"Remove from library" = "Quitar de la biblioteca";
+"Remove and delete files" = "Quitar y eliminar archivos";
+"No library" = "Sin biblioteca";
+"All Services" = "Todos los servicios";
+"All Qualities" = "Todas las calidades";
+"All Genres" = "Todos los géneros";
+"All Statuses" = "Todos los estados";
+"View" = "Vista";
+
+/* Detail */
+"Overview" = "Sinopsis";
+"Details" = "Detalles";
+"Cast" = "Reparto";
+"Network" = "Cadena";
+"Studio" = "Estudio";
+"Runtime" = "Duración";
+"Certification" = "Clasificación";
+"Size on disk" = "Tamaño en disco";
+"Episodes" = "Episodios";
+"Delete Movie" = "Eliminar película";
+"Delete Series" = "Eliminar serie";
+"Season" = "Temporada";
+"Specials" = "Especiales";
+"Releases" = "Versiones";
+"Rating" = "Valoración";
+
+/* Downloads */
+"All status" = "Todos los estados";
+"Downloading" = "Descargando";
+"Seeding" = "Compartiendo";
+"Completed" = "Completado";
+"Queued" = "En cola";
+"Paused" = "Pausado";
+"Error" = "Error";
+"Pause All" = "Pausar todo";
+"Resume All" = "Reanudar todo";
+"Recheck" = "Reverificar";
+"Resume" = "Reanudar";
+"Pause" = "Pausar";
+"No downloads" = "Sin descargas";
+"Nothing here" = "Nada por aquí";
+"Remove from queue only" = "Quitar solo de la cola";
+"Remove and delete from disk" = "Quitar y eliminar del disco";
+"Progress" = "Progreso";
+"Name" = "Nombre";
+"Size" = "Tamaño";
+"Seed time" = "Tiempo de seedeo";
+
+/* Calendar */
+"Downloaded" = "Descargado";
+"Missing" = "Falta";
+"Upcoming" = "Próximo";
+"All Media" = "Todo el contenido";
+"Monitored only" = "Solo monitorizados";
+"Nothing scheduled." = "Nada programado.";
+"No calendar" = "Sin calendario";
+
+/* Requests */
+"Discover" = "Descubrir";
+"Pending" = "Pendiente";
+"Approved" = "Aprobado";
+"Available" = "Disponible";
+"Request" = "Solicitar";
+"Approve" = "Aprobar";
+"Decline" = "Rechazar";
+"No requests." = "Sin solicitudes.";
+"Destination Server" = "Servidor de destino";
+"Quality Profile" = "Perfil de calidad";
+"Root Folder" = "Carpeta raíz";
+"Language Profile" = "Perfil de idioma";
+"Seasons" = "Temporadas";
+"All seasons" = "Todas las temporadas";
+"Folder" = "Carpeta";
+"Language" = "Idioma";
+
+/* Settings */
+"Networks" = "Redes";
+"Appearance" = "Apariencia";
+"Notifications" = "Notificaciones";
+"Security" = "Seguridad";
+"Advanced" = "Avanzado";
+"Configuration" = "Configuración";
+"About" = "Acerca de";
+"Version" = "Versión";
+"License" = "Licencia";
+"Accent Color" = "Color de acento";
+"Background Color" = "Color de fondo";
+"System" = "Sistema";
+"Light" = "Claro";
+"Dark" = "Oscuro";
+"Theme" = "Tema";
+"Text Size" = "Tamaño del texto";
+"Navigation" = "Navegación";
+"Shortcuts" = "Accesos directos";
+"Add Service" = "Añadir servicio";
+"Plex / Jellyfin shortcuts" = "Accesos a Plex / Jellyfin";
+"Seed limit" = "Límite de seedeo";
+"Download clients" = "Clientes de descarga";
+"Limit seeding" = "Limitar seedeo";
+"By days" = "Por días";
+"By ratio" = "Por ratio";
+"Maximum days" = "Días máximos";
+"Maximum ratio" = "Ratio máximo";
+"When exceeded" = "Al superarse";
+"Open" = "Abrir";
+"Web / IP" = "Web / IP";
+"Native app" = "App nativa";
+"Language" = "Idioma";
+"App Language" = "Idioma de la app";
+
+/* Server */
+"Monitoring" = "Monitorización";
+"Configured services" = "Servicios configurados";
+"Charts" = "Gráficas";
+"Stats" = "Estadísticas";
+"Console" = "Consola";
+"Files" = "Archivos";
+"Memory" = "Memoria";
+
+/* Update */
+"Update available" = "Actualización disponible";
+
+/* About */
+"View on GitHub" = "Ver en GitHub";
+
+/* Navigation */
+"More" = "Más";
+"Drag to reorder" = "Arrastra para reordenar";
+"Grid view" = "Vista en cuadrícula";
+"List view" = "Vista en lista";
+
+/* File metadata + release filters */
+"File" = "Archivo";
+"Current File" = "Archivo actual";
+"Resolution" = "Resolución";
+"Video" = "Vídeo";
+"Audio" = "Audio";
+"Audio Languages" = "Idiomas de audio";
+"File Size" = "Tamaño del archivo";
+"Seeders" = "Semillas";
+"Leechers" = "Pares";
+"Hide rejected" = "Ocultar rechazados";
+"All Indexers" = "Todos los indexadores";
+"Indexer" = "Indexador";
+"No releases found." = "No se encontraron versiones.";
+"No releases match the filters." = "Ninguna versión coincide con los filtros.";
+
+/* Easter egg */
+"Can you stop, please?" = "¿Puedes parar, por favor?";
+"Arrr… stop now." = "Arrr… para, ahora.";
+"That won't help, will it?" = "No servirá de nada, ¿verdad?";
+"Seriously, quit poking me!" = "En serio, deja de darme toques.";
+"I'm trying to sail here." = "Estoy intentando navegar.";
+"You again? Really?" = "¿Otra vez tú? ¿En serio?";

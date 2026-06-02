@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "title": "Example Show",
+    "sortTitle": "example show",
+    "status": "continuing",
+    "overview": "A sample series used for tests.",
+    "network": "Example Network",
+    "airTime": "21:00",
+    "year": 2018,
+    "runtime": 45,
+    "monitored": true,
+    "seasonFolder": true,
+    "path": "/tv/Example Show",
+    "qualityProfileId": 1,
+    "languageProfileId": 1,
+    "seriesType": "standard",
+    "tvdbId": 123456,
+    "imdbId": "tt1234567",
+    "titleSlug": "example-show",
+    "certification": "TV-MA",
+    "genres": ["Drama", "Thriller"],
+    "tags": [],
+    "added": "2021-01-02T03:04:05Z",
+    "ratings": { "votes": 100, "value": 8.4 },
+    "ended": false,
+    "images": [
+      { "coverType": "poster", "url": "/MediaCover/1/poster.jpg", "remoteUrl": "https://artworks.example/poster.jpg" },
+      { "coverType": "fanart", "url": "/MediaCover/1/fanart.jpg", "remoteUrl": "https://artworks.example/fanart.jpg" }
+    ],
+    "seasons": [
+      { "seasonNumber": 1, "monitored": true, "statistics": { "episodeFileCount": 10, "episodeCount": 10, "totalEpisodeCount": 10, "sizeOnDisk": 10737418240, "percentOfEpisodes": 100.0 } },
+      { "seasonNumber": 2, "monitored": true, "statistics": { "episodeFileCount": 4, "episodeCount": 8, "totalEpisodeCount": 10, "sizeOnDisk": 4294967296, "percentOfEpisodes": 50.0 } }
+    ],
+    "statistics": { "seasonCount": 2, "episodeFileCount": 14, "episodeCount": 18, "totalEpisodeCount": 20, "sizeOnDisk": 15032385536, "percentOfEpisodes": 77.7 }
+  },
+  {
+    "id": 2,
+    "title": "Second Show",
+    "status": "ended",
+    "year": 2015,
+    "monitored": false,
+    "qualityProfileId": 1,
+    "tvdbId": 654321,
+    "titleSlug": "second-show",
+    "ended": true,
+    "images": [],
+    "seasons": []
+  }
+]

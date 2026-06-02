@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-package:
+    name: Test NautilarrKit
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode.app
+      - name: Run unit tests
+        working-directory: Packages/NautilarrKit
+        run: swift test --parallel
+
+  build-app:
+    name: Build app (Catalyst + iOS)
+    runs-on: macos-latest
+    needs: test-package
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode.app
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build (Mac Catalyst)
+        run: |
+          xcodebuild -project Nautilarr.xcodeproj -scheme Nautilarr \
+            -destination 'platform=macOS,variant=Mac Catalyst' \
+            CODE_SIGNING_ALLOWED=NO build
+      - name: Build (iOS Simulator)
+        run: |
+          xcodebuild -project Nautilarr.xcodeproj -scheme Nautilarr \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build

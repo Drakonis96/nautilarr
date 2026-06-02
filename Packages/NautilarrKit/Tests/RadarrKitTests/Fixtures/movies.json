@@ -1,0 +1,46 @@
+[
+  {
+    "id": 10,
+    "title": "Example Movie",
+    "originalTitle": "Example Movie",
+    "sortTitle": "example movie",
+    "overview": "A sample movie used for tests.",
+    "status": "released",
+    "year": 2021,
+    "runtime": 122,
+    "monitored": true,
+    "hasFile": true,
+    "path": "/movies/Example Movie (2021)",
+    "qualityProfileId": 1,
+    "tmdbId": 555,
+    "imdbId": "tt7654321",
+    "titleSlug": "example-movie-555",
+    "certification": "PG-13",
+    "studio": "Example Studios",
+    "genres": ["Action", "Adventure"],
+    "tags": [],
+    "added": "2022-03-04T05:06:07Z",
+    "sizeOnDisk": 8589934592,
+    "inCinemas": "2021-06-01T00:00:00Z",
+    "digitalRelease": "2021-09-01T00:00:00Z",
+    "minimumAvailability": "released",
+    "isAvailable": true,
+    "images": [
+      { "coverType": "poster", "url": "/MediaCover/10/poster.jpg", "remoteUrl": "https://artworks.example/movie-poster.jpg" }
+    ]
+  },
+  {
+    "id": 11,
+    "title": "Upcoming Movie",
+    "status": "announced",
+    "year": 2026,
+    "monitored": true,
+    "hasFile": false,
+    "qualityProfileId": 1,
+    "tmdbId": 777,
+    "titleSlug": "upcoming-movie-777",
+    "minimumAvailability": "announced",
+    "isAvailable": false,
+    "images": []
+  }
+]

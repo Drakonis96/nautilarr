@@ -1,0 +1,4 @@
+[
+  { "id": 1, "name": "Example Torrent Tracker", "enable": true, "protocol": "torrent", "privacy": "private", "priority": 25 },
+  { "id": 2, "name": "Example Usenet Indexer", "enable": false, "protocol": "usenet", "privacy": "private", "priority": 25 }
+]

@@ -1,0 +1,9 @@
+{
+  "appName": "Sonarr",
+  "instanceName": "Sonarr",
+  "version": "4.0.9.2244",
+  "buildTime": "2024-08-15T20:12:33Z",
+  "isProduction": true,
+  "runtimeName": "netCore",
+  "osName": "ubuntu"
+}

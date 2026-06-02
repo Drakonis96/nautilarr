@@ -1,0 +1,33 @@
+[
+  {
+    "guid": "ExampleIndexer-abc123",
+    "title": "Example.Show.S02E05.2160p.WEB.h265",
+    "indexer": "ExampleIndexer",
+    "indexerId": 3,
+    "size": 6442450944,
+    "seeders": 120,
+    "leechers": 4,
+    "age": 1,
+    "ageHours": 14.5,
+    "protocol": "torrent",
+    "approved": true,
+    "rejected": false,
+    "rejections": [],
+    "quality": { "quality": { "id": 5, "name": "WEBDL-2160p", "resolution": 2160, "source": "web" } }
+  },
+  {
+    "guid": "ExampleIndexer-def456",
+    "title": "Example.Show.S02E05.720p.HDTV.x264",
+    "indexer": "ExampleIndexer",
+    "indexerId": 3,
+    "size": 1073741824,
+    "seeders": 5,
+    "leechers": 1,
+    "age": 30,
+    "protocol": "torrent",
+    "approved": false,
+    "rejected": true,
+    "rejections": ["Quality below cutoff"],
+    "quality": { "quality": { "id": 1, "name": "HDTV-720p", "resolution": 720, "source": "television" } }
+  }
+]

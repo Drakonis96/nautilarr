@@ -1,0 +1,9 @@
+{
+  "result": "success",
+  "arguments": {
+    "torrents": [
+      { "id": 1, "name": "Example.Show.S01.1080p", "status": 4, "percentDone": 0.55, "rateDownload": 1048576, "rateUpload": 0, "totalSize": 10737418240, "eta": 600, "errorString": "" },
+      { "id": 2, "name": "Example.Movie.2021", "status": 0, "percentDone": 1.0, "rateDownload": 0, "rateUpload": 524288, "totalSize": 21474836480, "eta": -1, "errorString": "" }
+    ]
+  }
+}

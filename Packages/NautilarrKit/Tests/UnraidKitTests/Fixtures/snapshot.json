@@ -1,0 +1,16 @@
+{
+  "data": {
+    "info": {
+      "os": { "platform": "linux", "distro": "Unraid", "release": "7.0.0", "uptime": "2026-05-20T08:00:00.000Z" },
+      "cpu": { "manufacturer": "AMD", "brand": "Ryzen 7 5700G", "cores": 8, "threads": 16 }
+    },
+    "array": {
+      "state": "STARTED",
+      "capacity": { "disks": { "free": "4000000000000", "used": "8000000000000", "total": "12000000000000" } }
+    },
+    "dockerContainers": [
+      { "id": "abc", "names": ["/sonarr"], "state": "RUNNING", "status": "Up 3 days", "autoStart": true },
+      { "id": "def", "names": ["/radarr"], "state": "EXITED", "status": "Exited (0)", "autoStart": false }
+    ]
+  }
+}

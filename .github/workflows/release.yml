@@ -1,0 +1,90 @@
+name: Release
+
+# Tag a release to build and publish artifacts:
+#   git tag v0.1.0 && git push origin v0.1.0
+# Produces an unsigned .ipa (AltStore re-signs on-device) and an ad-hoc-signed
+# macOS .app zip, attaches both to a GitHub Release, and publishes the updated
+# AltStore source to GitHub Pages.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write   # create releases
+  pages: write      # deploy AltStore source to Pages
+  id-token: write   # required by deploy-pages
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-latest
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode.app
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Run unit tests
+        working-directory: Packages/NautilarrKit
+        run: swift test --parallel
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Derive version metadata
+        id: meta
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          REPO="${GITHUB_REPOSITORY##*/}"
+          echo "owner=${OWNER}" >> "$GITHUB_OUTPUT"
+          echo "repo=${REPO}" >> "$GITHUB_OUTPUT"
+
+      - name: Build unsigned IPA
+        run: ./Scripts/package_ipa.sh
+
+      - name: Build macOS app (Mac Catalyst)
+        run: ./Scripts/package_mac.sh
+
+      - name: Generate AltStore source
+        run: |
+          IPA_PATH="dist/Nautilarr-${{ steps.meta.outputs.version }}.ipa"
+          DOWNLOAD_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/Nautilarr-${{ steps.meta.outputs.version }}.ipa"
+          ICON_URL="https://${{ steps.meta.outputs.owner }}.github.io/${{ steps.meta.outputs.repo }}/icon.png"
+          # Keep version history across releases by reading the published source.
+          curl -fsSL "https://${{ steps.meta.outputs.owner }}.github.io/${{ steps.meta.outputs.repo }}/apps.json" -o docs/apps.json || true
+          python3 Scripts/make_altstore_source.py \
+            --version "${{ steps.meta.outputs.version }}" \
+            --ipa "${IPA_PATH}" \
+            --download-url "${DOWNLOAD_URL}" \
+            --icon-url "${ICON_URL}" \
+            --date "${{ steps.meta.outputs.date }}" \
+            --notes "Nautilarr ${{ steps.meta.outputs.version }}" \
+            --output docs/apps.json
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/Nautilarr-${{ steps.meta.outputs.version }}.ipa
+            dist/Nautilarr-macOS-${{ steps.meta.outputs.version }}.zip
+          generate_release_notes: true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy AltStore source to Pages
+        uses: actions/deploy-pages@v4

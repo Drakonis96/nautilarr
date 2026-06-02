@@ -1,0 +1,19 @@
+[
+  {
+    "id": 5,
+    "artistName": "Example Artist",
+    "foreignArtistId": "mbid-1234",
+    "overview": "A sample artist used for tests.",
+    "status": "continuing",
+    "monitored": true,
+    "path": "/music/Example Artist",
+    "qualityProfileId": 1,
+    "metadataProfileId": 1,
+    "genres": ["Rock"],
+    "added": "2021-07-08T09:10:11Z",
+    "images": [
+      { "coverType": "poster", "url": "/MediaCover/Artists/5/poster.jpg", "remoteUrl": "https://artworks.example/artist.jpg" }
+    ],
+    "statistics": { "albumCount": 4, "trackFileCount": 40, "trackCount": 48, "totalTrackCount": 50, "sizeOnDisk": 524288000, "percentOfTracks": 83.3 }
+  }
+]

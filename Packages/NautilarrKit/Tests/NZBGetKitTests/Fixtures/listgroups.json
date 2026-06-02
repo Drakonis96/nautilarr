@@ -1,0 +1,8 @@
+{
+  "version": "1.1",
+  "result": [
+    { "NZBID": 1, "NZBName": "Example.Show.S01E01.1080p", "Status": "DOWNLOADING", "FileSizeMB": 1500, "RemainingSizeMB": 555, "Category": "tv" },
+    { "NZBID": 2, "NZBName": "Example.Movie.2021", "Status": "PAUSED", "FileSizeMB": 8000, "RemainingSizeMB": 8000, "Category": "movies" }
+  ],
+  "id": 1
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "Id": "sess-1",
+    "UserName": "alice",
+    "Client": "Jellyfin Web",
+    "DeviceName": "Chrome",
+    "NowPlayingItem": { "Name": "Pilot", "SeriesName": "Example Show", "Type": "Episode", "RunTimeTicks": 18000000000 },
+    "PlayState": { "PositionTicks": 9000000000, "IsPaused": false }
+  },
+  {
+    "Id": "sess-2",
+    "UserName": "bob",
+    "DeviceName": "Apple TV",
+    "NowPlayingItem": { "Name": "Example Movie", "Type": "Movie", "RunTimeTicks": 72000000000 },
+    "PlayState": { "PositionTicks": 36000000000, "IsPaused": true }
+  },
+  { "Id": "sess-idle", "UserName": "carol", "DeviceName": "iPhone" }
+]

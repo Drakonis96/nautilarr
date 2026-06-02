@@ -1,0 +1,22 @@
+{
+  "page": 1,
+  "pageSize": 50,
+  "totalRecords": 1,
+  "records": [
+    {
+      "id": 88,
+      "movieId": 10,
+      "title": "Example.Movie.2021.2160p.WEB.h265",
+      "status": "downloading",
+      "trackedDownloadStatus": "ok",
+      "trackedDownloadState": "downloading",
+      "size": 8000000000,
+      "sizeleft": 2000000000,
+      "timeleft": "00:12:00",
+      "downloadClient": "qBittorrent",
+      "protocol": "torrent",
+      "indexer": "ExampleIndexer",
+      "quality": { "quality": { "id": 7, "name": "WEBDL-2160p", "resolution": 2160 } }
+    }
+  ]
+}

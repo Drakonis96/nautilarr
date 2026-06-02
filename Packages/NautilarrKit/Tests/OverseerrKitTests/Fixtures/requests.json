@@ -1,0 +1,21 @@
+{
+  "pageInfo": { "pages": 1, "results": 2, "page": 1 },
+  "results": [
+    {
+      "id": 1,
+      "status": 1,
+      "type": "movie",
+      "media": { "id": 10, "tmdbId": 555, "mediaType": "movie", "status": 2 },
+      "requestedBy": { "id": 2, "displayName": "Alice", "email": "a@example.com" },
+      "createdAt": "2024-08-01T10:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "status": 2,
+      "type": "tv",
+      "media": { "id": 11, "tmdbId": 1399, "mediaType": "tv", "status": 3 },
+      "requestedBy": { "id": 3, "username": "bob" },
+      "createdAt": "2024-08-02T11:00:00.000Z"
+    }
+  ]
+}

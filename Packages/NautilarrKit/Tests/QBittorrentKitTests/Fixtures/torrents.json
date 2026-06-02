@@ -1,0 +1,35 @@
+[
+  {
+    "hash": "abc123def456",
+    "name": "Example.Show.S01.1080p.WEB",
+    "size": 10737418240,
+    "progress": 0.42,
+    "dlspeed": 5242880,
+    "upspeed": 1048576,
+    "state": "downloading",
+    "category": "tv-sonarr",
+    "tags": "",
+    "ratio": 0.12,
+    "eta": 1800,
+    "num_seeds": 30,
+    "num_leechs": 5,
+    "added_on": 1716000000,
+    "amount_left": 6227020800
+  },
+  {
+    "hash": "fff999",
+    "name": "Example.Movie.2021.2160p",
+    "size": 21474836480,
+    "progress": 1.0,
+    "dlspeed": 0,
+    "upspeed": 2097152,
+    "state": "pausedUP",
+    "category": "movies-radarr",
+    "ratio": 1.8,
+    "eta": 8640000,
+    "num_seeds": 0,
+    "num_leechs": 0,
+    "added_on": 1715000000,
+    "amount_left": 0
+  }
+]

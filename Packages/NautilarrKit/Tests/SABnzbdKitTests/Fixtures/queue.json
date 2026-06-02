@@ -1,0 +1,32 @@
+{
+  "queue": {
+    "status": "Downloading",
+    "speed": "3.5 M",
+    "sizeleft": "5.2 GB",
+    "mbleft": "5324.5",
+    "timeleft": "0:12:30",
+    "paused": false,
+    "slots": [
+      {
+        "nzo_id": "SABnzbd_nzo_abc",
+        "filename": "Example.Show.S01E01.1080p",
+        "status": "Downloading",
+        "percentage": "63",
+        "mb": "1500.0",
+        "mbleft": "555.0",
+        "timeleft": "0:03:10",
+        "cat": "tv"
+      },
+      {
+        "nzo_id": "SABnzbd_nzo_def",
+        "filename": "Example.Movie.2021",
+        "status": "Paused",
+        "percentage": "0",
+        "mb": "8000.0",
+        "mbleft": "8000.0",
+        "timeleft": "0:00:00",
+        "cat": "movies"
+      }
+    ]
+  }
+}
