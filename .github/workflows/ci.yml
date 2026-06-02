@@ -18,8 +18,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Select Xcode (Liquid Glass needs the iOS/macOS 26 SDK)
         run: |
-          XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
-          if [ -z "$XCODE" ]; then XCODE=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1); fi
+          # Prefer the known-good Xcode 26.3.0. A newer Xcode_26.3.app on the
+          # runner turns swift-nio-ssh's umbrella `import NIO` from a warning into
+          # a hard error under explicit modules. Fall back to 26.2, then any 26.x.
+          XCODE=""
+          for c in /Applications/Xcode_26.3.0.app /Applications/Xcode_26.2*.app; do
+            [ -d "$c" ] && XCODE="$c" && break
+          done
+          if [ -z "$XCODE" ]; then XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1); fi
           if [ -z "$XCODE" ]; then XCODE=/Applications/Xcode.app; fi
           echo "Selecting $XCODE"
           sudo xcode-select -switch "$XCODE"
@@ -36,8 +42,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Select Xcode (Liquid Glass needs the iOS/macOS 26 SDK)
         run: |
-          XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
-          if [ -z "$XCODE" ]; then XCODE=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1); fi
+          # Prefer the known-good Xcode 26.3.0. A newer Xcode_26.3.app on the
+          # runner turns swift-nio-ssh's umbrella `import NIO` from a warning into
+          # a hard error under explicit modules. Fall back to 26.2, then any 26.x.
+          XCODE=""
+          for c in /Applications/Xcode_26.3.0.app /Applications/Xcode_26.2*.app; do
+            [ -d "$c" ] && XCODE="$c" && break
+          done
+          if [ -z "$XCODE" ]; then XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1); fi
           if [ -z "$XCODE" ]; then XCODE=/Applications/Xcode.app; fi
           echo "Selecting $XCODE"
           sudo xcode-select -switch "$XCODE"
