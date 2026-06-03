@@ -168,6 +168,43 @@ final class SonarrClientTests: XCTestCase {
         XCTAssertEqual(json?["id"] as? Int, 7)
         XCTAssertEqual(json?["monitored"] as? Bool, false)
     }
+
+    func testDownloadClientsDecode() async throws {
+        var path: String?
+        let client = makeClient { request in
+            path = request.url?.path
+            let body = #"[{"id":1,"name":"qBit","enable":true,"protocol":"torrent","implementation":"QBittorrent","priority":1},{"id":2,"name":"SAB","enable":false,"protocol":"usenet","implementation":"Sabnzbd","priority":2}]"#
+            return (200, body.data(using: .utf8)!)
+        }
+        let clients = try await client.downloadClients()
+        XCTAssertEqual(path, "/api/v3/downloadclient")
+        XCTAssertEqual(clients.count, 2)
+        XCTAssertEqual(clients[0].name, "qBit")
+        XCTAssertEqual(clients[0].enable, true)
+        XCTAssertEqual(clients[0].protocolName, "torrent")
+        XCTAssertEqual(clients[1].enable, false)
+    }
+
+    func testSetDownloadClientEnabledRoundTripsPreservingFields() async throws {
+        var putMethod: String?; var putPath: String?; var putBody: Data?
+        let client = makeClient { request in
+            if request.httpMethod == "GET" {
+                let body = #"{"id":2,"name":"SAB","enable":true,"protocol":"usenet","fields":[{"name":"host","value":"x"}]}"#
+                return (200, body.data(using: .utf8)!)
+            }
+            putMethod = request.httpMethod
+            putPath = request.url?.path
+            putBody = request.httpBody ?? request.bodyStreamData()
+            return (200, Data())
+        }
+        try await client.setDownloadClientEnabled(id: 2, enabled: false)
+        XCTAssertEqual(putMethod, "PUT")
+        XCTAssertEqual(putPath, "/api/v3/downloadclient/2")
+        let json = try JSONSerialization.jsonObject(with: XCTUnwrap(putBody)) as? [String: Any]
+        XCTAssertEqual(json?["enable"] as? Bool, false)
+        XCTAssertEqual(json?["id"] as? Int, 2)
+        XCTAssertNotNil(json?["fields"]) // unmapped fields survive the round-trip
+    }
 }
 
 private extension URLRequest {

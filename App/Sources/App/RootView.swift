@@ -27,7 +27,14 @@ private enum CompactTab: Hashable {
 private struct CompactRootView: View {
     @EnvironmentObject private var settings: AppSettings
     @EnvironmentObject private var environment: AppEnvironment
+    @EnvironmentObject private var instanceStore: InstanceStore
     @State private var selection: CompactTab = .destination(.home)
+
+    /// Visible destinations, minus service-specific sections that have no
+    /// configured instance (so Tautulli/SSH/etc. only appear once added).
+    private var visible: [AppDestination] {
+        settings.visibleTabOrder.filter { $0.isConfigured(in: instanceStore) }
+    }
 
     /// iOS only shows five tab items before folding the rest into its OWN
     /// "More" navigation controller. That overflow controller double-stacks
@@ -38,12 +45,12 @@ private struct CompactRootView: View {
     /// destinations stay as direct tabs and everything else lives under a
     /// custom "More" tab that uses our own `NavigationStack`.
     private var directTabs: [AppDestination] {
-        let all = settings.visibleTabOrder
+        let all = visible
         return all.count > 5 ? Array(all.prefix(4)) : all
     }
 
     private var overflow: [AppDestination] {
-        let all = settings.visibleTabOrder
+        let all = visible
         return all.count > 5 ? Array(all.dropFirst(4)) : []
     }
 
@@ -70,6 +77,10 @@ private struct CompactRootView: View {
                         .appBackground(settings.background)
                         .themedBars(settings.background)
                 }
+                // Re-localize the whole tab (incl. nav titles and any pushed
+                // screens) the instant the language changes.
+                .id(settings.localeIdentifier)
+                .scrollToTopButton(enabled: settings.scrollToTopEnabled)
                 .tabItem { destination.navLabel }
                 .badge(destination.showsActivityBadge ? environment.activeDownloadCount : 0)
                 .tag(CompactTab.destination(destination))
@@ -80,14 +91,16 @@ private struct CompactRootView: View {
                         .appBackground(settings.background)
                         .themedBars(settings.background)
                 }
+                .id(settings.localeIdentifier)
+                .scrollToTopButton(enabled: settings.scrollToTopEnabled)
                 .tabItem { Label("More", systemImage: "ellipsis.circle") }
                 .badge(overflowBadge)
                 .tag(CompactTab.more)
             }
         }
-        // If hiding/reordering tabs (from the More list) drops the selected tab,
-        // fall back to Home so the screen never goes blank.
-        .onChange(of: settings.visibleTabOrder) { _, _ in
+        // If hiding/reordering tabs (or removing a service) drops the selected
+        // tab, fall back to Home so the screen never goes blank.
+        .onChange(of: visible) { _, _ in
             if !selectionIsValid { selection = .destination(.home) }
         }
     }
@@ -124,7 +137,12 @@ private struct MoreView: View {
 private struct SidebarRootView: View {
     @EnvironmentObject private var settings: AppSettings
     @EnvironmentObject private var environment: AppEnvironment
+    @EnvironmentObject private var instanceStore: InstanceStore
     @State private var selection: AppDestination? = .home
+
+    private var visible: [AppDestination] {
+        settings.visibleTabOrder.filter { $0.isConfigured(in: instanceStore) }
+    }
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     @State private var showAbout = false
 
@@ -132,7 +150,7 @@ private struct SidebarRootView: View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             List(selection: $selection) {
                 Section {
-                    ForEach(settings.visibleTabOrder) { destination in
+                    ForEach(visible) { destination in
                         NavigationLink(value: destination) {
                             destination.navLabel
                                 .badge(destination.showsActivityBadge ? environment.activeDownloadCount : 0)
@@ -158,7 +176,9 @@ private struct SidebarRootView: View {
                     )
                 }
             }
+            .id(settings.localeIdentifier)
             .appBackground(settings.background)
+            .scrollToTopButton(enabled: settings.scrollToTopEnabled)
         }
         .navigationSplitViewStyle(.balanced)
         .sheet(isPresented: $showAbout) { AboutSplashView() }
@@ -209,6 +229,26 @@ extension AppDestination {
         case .requests: RequestsView()
         case .indexers: IndexersView()
         case .subtitles: SubtitlesView()
+        case .tautulli:
+            ServiceSection(type: .tautulli, emptyTitle: "No Tautulli",
+                           emptyDescription: "Add a Tautulli service in Settings to see playback statistics.") {
+                TautulliDetailView(instance: $0)
+            }
+        case .jellystat:
+            ServiceSection(type: .jellystat, emptyTitle: "No Jellystat",
+                           emptyDescription: "Add a Jellystat service in Settings to see playback statistics.") {
+                JellystatDetailView(instance: $0)
+            }
+        case .unraid:
+            ServiceSection(type: .unraid, emptyTitle: "No Unraid",
+                           emptyDescription: "Add an Unraid service in Settings to see system, array and Docker status.") {
+                UnraidDetailView(instance: $0)
+            }
+        case .ssh:
+            ServiceSection(type: .ssh, emptyTitle: "No SSH services",
+                           emptyDescription: "Add an SSH service in Settings for a terminal, host stats and a file browser.") {
+                SSHDetailView(instance: $0)
+            }
         case .server: ServerView()
         case .settings: SettingsView()
         }

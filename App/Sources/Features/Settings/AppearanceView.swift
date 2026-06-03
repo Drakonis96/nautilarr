@@ -159,6 +159,20 @@ struct AppearanceView: View {
             .tintedCards()
 
             Section {
+                Toggle(isOn: Binding(
+                    get: { settings.scrollToTopEnabled },
+                    set: { settings.scrollToTopEnabled = $0 }
+                )) {
+                    Label("Scroll-to-top button", systemImage: "arrow.up.to.line")
+                }
+            } header: {
+                Text("Navigation Aids")
+            } footer: {
+                Text("Shows a floating button in the bottom-left corner of every screen that jumps back to the top.")
+            }
+            .tintedCards()
+
+            Section {
                 NavigationLink {
                     ShortcutsSettingsView()
                 } label: {

@@ -13,8 +13,8 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "0.1.1"
-    CURRENT_PROJECT_VERSION: "2"
+    MARKETING_VERSION: "0.1.2"
+    CURRENT_PROJECT_VERSION: "3"
     SWIFT_VERSION: "5.9"
     DEVELOPMENT_TEAM: ""
     CODE_SIGN_STYLE: Automatic
@@ -89,13 +89,13 @@ targets:
           NSAllowsLocalNetworking: true
         NSLocalNetworkUsageDescription: "Nautilarr connects to your self-hosted services on your local network."
         NSFaceIDUsageDescription: "Nautilarr uses Face ID to protect SSH access and settings."
-        # Local notifications + background polling only — no remote push.
+        # Local notifications + background polling only — no remote push. Only
+        # the BGAppRefreshTask ("fetch") is actually used; the unused "processing"
+        # mode was dropped so the app declares no capability it doesn't use.
         UIBackgroundModes:
           - fetch
-          - processing
         BGTaskSchedulerPermittedIdentifiers:
           - com.drakonis96.nautilarr.refresh
-          - com.drakonis96.nautilarr.processing
         UILaunchScreen:
           UIColorName: BrandNavy
         UISupportedInterfaceOrientations:

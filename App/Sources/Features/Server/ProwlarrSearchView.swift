@@ -45,7 +45,6 @@ struct ProwlarrSearchView: View {
                 .tintedCards()
             }
         }
-        .navigationTitle(instance.name)
         .overlay(alignment: .bottom) { Toast(message: status) { status = nil } }
     }
 

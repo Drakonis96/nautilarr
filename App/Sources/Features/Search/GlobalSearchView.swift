@@ -20,6 +20,10 @@ struct GlobalSearchView: View {
     @State private var artistResults: [LidarrArtist] = []
     @State private var isSearchingProviders = false
     @State private var didSearchProviders = false
+    /// Debounce for searching the metadata providers as the user types, so a
+    /// title typed in any language resolves automatically (like Sonarr/Radarr)
+    /// without having to press return.
+    @State private var searchDebounce: Task<Void, Never>?
 
     @State private var pendingSeries: SeriesAdd?
     @State private var pendingMovie: MovieAdd?
@@ -69,11 +73,20 @@ struct GlobalSearchView: View {
             }
         }
         .navigationDestination(item: $openedEntry) { entry in destination(for: entry) }
-        .onChange(of: library.searchText) { _, _ in
+        .onChange(of: library.searchText) { _, newValue in
             didSearchProviders = false
             seriesResults = []; movieResults = []; artistResults = []
+            // Auto-search the metadata providers (debounced) so any-language
+            // titles resolve as you type, matching the Sonarr/Radarr experience.
+            searchDebounce?.cancel()
+            let trimmed = newValue.trimmingCharacters(in: .whitespaces)
+            guard trimmed.count >= 2 else { return }
+            searchDebounce = Task {
+                try? await Task.sleep(nanoseconds: 550_000_000)
+                if Task.isCancelled { return }
+                await searchProviders()
+            }
         }
-        .overlay { if isSearchingProviders { ProgressView() } }
         .task { await library.load(store: instanceStore) }
         .onReceive(NotificationCenter.default.publisher(for: .nautilarrRefresh)) { _ in
             Task { await library.load(store: instanceStore) }
@@ -121,7 +134,12 @@ struct GlobalSearchView: View {
     @ViewBuilder
     private var addSection: some View {
         Section("Add to library") {
-            if !didSearchProviders && !isSearchingProviders {
+            if isSearchingProviders {
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small)
+                    Text("Searching providers…").foregroundStyle(.secondary).font(.subheadline)
+                }
+            } else if !didSearchProviders {
                 Button { Task { await searchProviders() } } label: {
                     Label("Search providers for “\(term)”", systemImage: "sparkle.magnifyingglass")
                 }
@@ -193,15 +211,20 @@ struct GlobalSearchView: View {
         didSearchProviders = true
         defer { isSearchingProviders = false }
         // Metadata lookups are provider-wide, so a single instance per kind is
-        // enough to fetch results; the user picks the add target per result.
+        // enough to fetch results; the user picks the add target per result. Each
+        // result is only applied if the query hasn't changed since (the field may
+        // have moved on while an auto-search was in flight).
         if let inst = sonarr.first, let c = instanceStore.sonarrClient(for: inst) {
-            seriesResults = (try? await c.lookupSeries(term: t)) ?? []
+            let r = (try? await c.lookupSeries(term: t)) ?? []
+            if term == t { seriesResults = r }
         }
         if let inst = radarr.first, let c = instanceStore.radarrClient(for: inst) {
-            movieResults = (try? await c.lookupMovies(term: t)) ?? []
+            let r = (try? await c.lookupMovies(term: t)) ?? []
+            if term == t { movieResults = r }
         }
         if let inst = lidarr.first, let c = instanceStore.lidarrClient(for: inst) {
-            artistResults = (try? await c.lookupArtists(term: t)) ?? []
+            let r = (try? await c.lookupArtists(term: t)) ?? []
+            if term == t { artistResults = r }
         }
     }
 }

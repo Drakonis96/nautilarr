@@ -1,6 +1,34 @@
 import Foundation
 import NautilarrCore
 
+// MARK: - Lenient decoding helpers
+
+/// Jellystat's Postgres-backed stats can surface numbers as JSON numbers or
+/// strings depending on the column/version, so decode tolerantly.
+private extension KeyedDecodingContainer {
+    func lenientString(_ key: Key) -> String? {
+        if let s = try? decodeIfPresent(String.self, forKey: key) { return s }
+        if let i = try? decodeIfPresent(Int.self, forKey: key) { return String(i) }
+        if let d = try? decodeIfPresent(Double.self, forKey: key) { return String(d) }
+        return nil
+    }
+    func lenientInt(_ key: Key) -> Int? {
+        if let i = try? decodeIfPresent(Int.self, forKey: key) { return i }
+        if let d = try? decodeIfPresent(Double.self, forKey: key) { return Int(d) }
+        if let s = try? decodeIfPresent(String.self, forKey: key) { return Int(Double(s) ?? 0) }
+        return nil
+    }
+    /// First key that yields a value, across alternate spellings.
+    func lenientString(_ keys: [Key]) -> String? {
+        for k in keys { if let v = lenientString(k) { return v } }
+        return nil
+    }
+    func lenientInt(_ keys: [Key]) -> Int? {
+        for k in keys { if let v = lenientInt(k) { return v } }
+        return nil
+    }
+}
+
 // MARK: - Models (Jellyfin session shape, proxied by Jellystat)
 
 public struct JellystatNowPlaying: Codable, Sendable, Equatable, Hashable {
@@ -62,6 +90,95 @@ public struct JellystatSession: Codable, Sendable, Equatable, Hashable, Identifi
     }
 }
 
+// MARK: - Stats models
+
+/// Per-user activity from `/stats/getAllUserActivity` (the `jf_all_user_activity`
+/// view). `TotalWatchTime` is in seconds.
+public struct JellystatUserActivity: Decodable, Sendable, Identifiable, Equatable, Hashable {
+    public var userId: String?
+    public var userName: String?
+    public var totalPlays: Int?
+    public var totalWatchTime: Int?
+    public var lastClient: String?
+    public var lastActivityDate: String?
+
+    public var id: String { userId ?? userName ?? UUID().uuidString }
+
+    private enum CodingKeys: String, CodingKey {
+        case userId = "UserId"
+        case userName = "UserName"
+        case totalPlays = "TotalPlays"
+        case totalWatchTime = "TotalWatchTime"
+        case lastClient = "LastClient"
+        case lastActivityDate = "LastActivityDate"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        userId = c.lenientString(.userId)
+        userName = c.lenientString(.userName)
+        totalPlays = c.lenientInt(.totalPlays)
+        totalWatchTime = c.lenientInt(.totalWatchTime)
+        lastClient = c.lenientString(.lastClient)
+        lastActivityDate = c.lenientString(.lastActivityDate)
+    }
+}
+
+/// Per-library stats from `/stats/getLibraryCardStats`
+/// (the `js_library_stats_overview` view).
+public struct JellystatLibraryCard: Decodable, Sendable, Identifiable, Equatable, Hashable {
+    public var libraryId: String?
+    public var name: String?
+    public var collectionType: String?
+    public var libraryCount: Int?
+    public var seasonCount: Int?
+    public var episodeCount: Int?
+
+    public var id: String { libraryId ?? name ?? UUID().uuidString }
+
+    private enum CodingKeys: String, CodingKey {
+        case libraryId = "Id"
+        case name = "Name"
+        case collectionType = "CollectionType"
+        case libraryCount = "Library_Count"
+        case seasonCount = "Season_Count"
+        case episodeCount = "Episode_Count"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        libraryId = c.lenientString(.libraryId)
+        name = c.lenientString(.name)
+        collectionType = c.lenientString(.collectionType)
+        libraryCount = c.lenientInt(.libraryCount)
+        seasonCount = c.lenientInt(.seasonCount)
+        episodeCount = c.lenientInt(.episodeCount)
+    }
+}
+
+/// A ranked entry from the `/stats/getMostViewedByType` and
+/// `/stats/getMostActiveUsers` endpoints (item or user + play count).
+public struct JellystatRanked: Decodable, Sendable, Identifiable, Equatable, Hashable {
+    public var entryId: String?
+    public var name: String?
+    public var plays: Int?
+
+    public var id: String { entryId ?? name ?? UUID().uuidString }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "Id", userId = "UserId"
+        case name = "Name", userName = "UserName"
+        case plays = "Plays"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        entryId = c.lenientString([.id, .userId])
+        name = c.lenientString([.name, .userName])
+        plays = c.lenientInt([.plays])
+    }
+}
+
 // MARK: - Client
 
 /// Client for the Jellystat API (Jellyfin monitoring). Authentication is via the
@@ -87,5 +204,30 @@ public struct JellystatClient: Sendable {
     public func sessions() async throws -> [JellystatSession] {
         let all: [JellystatSession] = try await api.send(.get("proxy/getSessions"))
         return all.filter { $0.isPlaying }
+    }
+
+    /// Per-user activity totals (`/stats/getAllUserActivity`).
+    public func users() async throws -> [JellystatUserActivity] {
+        try await api.send(.get("stats/getAllUserActivity"))
+    }
+
+    /// Per-library stats cards (`/stats/getLibraryCardStats`).
+    public func libraryCards() async throws -> [JellystatLibraryCard] {
+        try await api.send(.get("stats/getLibraryCardStats"))
+    }
+
+    /// Most-viewed items of a given type over the last `days`. `type` is one of
+    /// "Movie", "Series" or "Audio".
+    public func mostViewed(type: String, days: Int = 30) async throws -> [JellystatRanked] {
+        let endpoint = try Endpoint.jsonObject("stats/getMostViewedByType", method: .post,
+                                               object: ["days": days, "type": type])
+        return try await api.send(endpoint)
+    }
+
+    /// Most-active users over the last `days`.
+    public func mostActiveUsers(days: Int = 30) async throws -> [JellystatRanked] {
+        let endpoint = try Endpoint.jsonObject("stats/getMostActiveUsers", method: .post,
+                                               object: ["days": days])
+        return try await api.send(endpoint)
     }
 }

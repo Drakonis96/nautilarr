@@ -9,7 +9,6 @@ struct HomeView: View {
     @EnvironmentObject private var environment: AppEnvironment
     @Environment(\.horizontalSizeClass) private var hSizeClass
     @StateObject private var model = HomeViewModel()
-    @StateObject private var prank = ServicePrankController()
 
     private let cardColumns = [GridItem(.adaptive(minimum: 300), spacing: 16)]
     private let compactColumns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 3)
@@ -106,7 +105,7 @@ struct HomeView: View {
         .overlay(alignment: .top) {
             if !isMac {
                 OceanHeader(dive: diveDepth, riseStart: riseStart, riseFrom: riseFrom,
-                            refreshing: isRefreshing, accent: settings.accent.color)
+                            refreshing: isRefreshing)
                     .ignoresSafeArea(edges: .top)
             }
         }
@@ -120,8 +119,6 @@ struct HomeView: View {
                 ArtistDetailView(instance: instance, artist: artist)
             }
         }
-        // Easter egg: tapping a service icon sends it bouncing toward the top.
-        .overlay { ServicePrankOverlay(controller: prank) }
         .overlay { if model.isLoading && model.serviceStats.isEmpty { ProgressView() } }
         .task(id: settings.autoRefreshNowPlaying) {
             await model.load(store: instanceStore)
@@ -148,6 +145,11 @@ struct HomeView: View {
                 }
             }
         }
+        // On iPhone the submarine IS the header: drop the large "Inicio" title so
+        // its full-width hit area stops stealing taps meant for the submarine.
+        // (Mac keeps the title — it doesn't show the ocean header.)
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle(isMac ? "Inicio" : "")
     }
 
     @ViewBuilder
@@ -211,24 +213,61 @@ struct HomeView: View {
     private func serviceCard(_ stat: HomeViewModel.ServiceStat) -> some View {
         let card = Group {
             if useCompactServices {
-                CompactServiceCard(stat: stat) { prank.bump(stat.type) }
+                CompactServiceCard(stat: stat)
             } else {
-                ServiceStatCard(stat: stat) { prank.bump(stat.type) }
+                ServiceStatCard(stat: stat)
             }
         }
-        if let instance = downloadClientInstance(for: stat) {
-            NavigationLink { DownloadClientView(instance: instance) } label: { card }
+        // Tapping anywhere on the card opens that service's section.
+        if hasDestination(stat) {
+            NavigationLink { destinationView(for: stat) } label: { card }
                 .buttonStyle(.plain)
         } else {
             card
         }
     }
 
-    /// Resolves the download-client instance behind a card so it can open the
-    /// per-client management screen (nil for non-clients or failed cards).
-    private func downloadClientInstance(for stat: HomeViewModel.ServiceStat) -> ServiceInstance? {
-        let clientTypes: Set<ServiceType> = [.qbittorrent, .transmission, .deluge, .sabnzbd, .nzbget]
-        guard clientTypes.contains(stat.type), stat.errorMessage == nil, let id = stat.instanceID else { return nil }
+    /// Whether tapping the card leads somewhere — section views always do;
+    /// per-instance dashboards need a resolvable instance.
+    private func hasDestination(_ stat: HomeViewModel.ServiceStat) -> Bool {
+        switch stat.type {
+        case .sonarr, .radarr, .lidarr, .qbittorrent, .transmission, .deluge, .sabnzbd,
+             .nzbget, .overseerr, .prowlarr, .jackett, .nzbhydra2, .bazarr:
+            return true
+        case .tautulli, .jellystat, .unraid, .ssh:
+            return detailInstance(for: stat) != nil
+        }
+    }
+
+    /// The destination for a tapped card — its respective section (Library,
+    /// Downloads, Requests, Indexers, Subtitles) or per-instance dashboard.
+    @ViewBuilder
+    private func destinationView(for stat: HomeViewModel.ServiceStat) -> some View {
+        switch stat.type {
+        case .sonarr, .radarr, .lidarr:
+            LibraryView().navigationTitle("Library").appBackground(settings.background)
+        case .qbittorrent, .transmission, .deluge, .sabnzbd, .nzbget:
+            DownloadsView().navigationTitle("Downloads").appBackground(settings.background)
+        case .overseerr:
+            RequestsView().navigationTitle("Requests").appBackground(settings.background)
+        case .prowlarr, .jackett, .nzbhydra2:
+            IndexersView().navigationTitle("Indexers").appBackground(settings.background)
+        case .bazarr:
+            SubtitlesView().navigationTitle("Subtitles").appBackground(settings.background)
+        case .tautulli:
+            if let inst = detailInstance(for: stat) { TautulliDetailView(instance: inst) }
+        case .jellystat:
+            if let inst = detailInstance(for: stat) { JellystatDetailView(instance: inst) }
+        case .unraid:
+            if let inst = detailInstance(for: stat) { UnraidDetailView(instance: inst) }
+        case .ssh:
+            if let inst = detailInstance(for: stat) { SSHDetailView(instance: inst) }
+        }
+    }
+
+    /// Resolves the instance behind a per-instance dashboard card.
+    private func detailInstance(for stat: HomeViewModel.ServiceStat) -> ServiceInstance? {
+        guard stat.errorMessage == nil, let id = stat.instanceID else { return nil }
         return instanceStore.instancesInActiveNetwork.first { $0.id == id }
     }
 
@@ -363,14 +402,11 @@ struct HomeView: View {
 
 private struct CompactServiceCard: View {
     let stat: HomeViewModel.ServiceStat
-    var onIconTap: () -> Void = {}
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 4) {
                 ServiceIcon(type: stat.type, size: 30)
-                    .contentShape(Circle())
-                    .highPriorityGesture(TapGesture().onEnded { onIconTap() })
                 Spacer(minLength: 0)
                 Circle().fill(stat.errorMessage == nil ? .green : .red).frame(width: 7, height: 7)
             }
@@ -394,17 +430,11 @@ private struct CompactServiceCard: View {
 
 private struct ServiceStatCard: View {
     let stat: HomeViewModel.ServiceStat
-    /// Tapping just the icon triggers the dashboard easter egg.
-    var onIconTap: () -> Void = {}
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
                 ServiceIcon(type: stat.type, size: 26)
-                    .contentShape(Circle())
-                    // High-priority so an icon tap pranks instead of following
-                    // the card's navigation link (download-client cards).
-                    .highPriorityGesture(TapGesture().onEnded { onIconTap() })
                 Text(stat.instanceName).font(.headline)
                 Spacer()
                 Circle().fill(stat.errorMessage == nil ? .green : .red).frame(width: 8, height: 8)

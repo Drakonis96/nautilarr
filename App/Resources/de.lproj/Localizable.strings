@@ -435,3 +435,67 @@
 
 /* Easter egg */
 "Arr, sailor!" = "Arr, Matrose!";
+
+/* Sonarr/Radarr download clients + navigation aids */
+"Download Clients" = "Download-Clients";
+"Sonarr / Radarr download clients" = "Sonarr / Radarr Download-Clients";
+"Enable or disable the download clients configured inside each Sonarr and Radarr instance, and test them." = "Aktiviere oder deaktiviere die in jeder Sonarr- und Radarr-Instanz konfigurierten Download-Clients und teste sie.";
+"No Sonarr or Radarr" = "Kein Sonarr oder Radarr";
+"Add a Sonarr or Radarr service to manage its download clients." = "Füge einen Sonarr- oder Radarr-Dienst hinzu, um dessen Download-Clients zu verwalten.";
+"No download clients configured." = "Keine Download-Clients konfiguriert.";
+"Searching providers…" = "Anbieter werden durchsucht…";
+"Scroll-to-top button" = "Nach-oben-Schaltfläche";
+"Navigation Aids" = "Navigationshilfen";
+"Shows a floating button in the bottom-left corner of every screen that jumps back to the top." = "Zeigt auf jedem Bildschirm unten links eine schwebende Schaltfläche an, die nach ganz oben springt.";
+
+/* Tautulli / Jellystat statistics dashboards */
+"Activity" = "Aktivität";
+"History" = "Verlauf";
+"Users" = "Benutzer";
+"Libraries" = "Bibliotheken";
+"Statistics" = "Statistiken";
+"Terminate" = "Beenden";
+"Terminate this stream?" = "Diesen Stream beenden?";
+"Nothing is playing right now." = "Derzeit wird nichts abgespielt.";
+"No watch history yet." = "Noch kein Wiedergabeverlauf.";
+"No statistics for this period." = "Keine Statistiken für diesen Zeitraum.";
+"No users." = "Keine Benutzer.";
+"No libraries." = "Keine Bibliotheken.";
+"No user activity." = "Keine Benutzeraktivität.";
+"Most Watched Movies" = "Meistgesehene Filme";
+"Most Watched Series" = "Meistgesehene Serien";
+"Most Active Users" = "Aktivste Benutzer";
+"Statistic" = "Statistik";
+"Activity · History · Stats · Users · Libraries" = "Aktivität · Verlauf · Statistiken · Benutzer · Bibliotheken";
+"Activity · Users · Libraries · Stats" = "Aktivität · Benutzer · Bibliotheken · Statistiken";
+"%lld plays" = "%lld Wiedergaben";
+"%lld items" = "%lld Einträge";
+"%lld seasons" = "%lld Staffeln";
+"%lld episodes" = "%lld Folgen";
+
+/* Indexers unification + Unraid dashboard + downloads manage */
+"Cores" = "Kerne";
+"Uptime" = "Betriebszeit";
+"No data." = "Keine Daten.";
+"Manage client" = "Client verwalten";
+"Type above to search this indexer for any release." = "Oben tippen, um diesen Indexer nach Veröffentlichungen zu durchsuchen.";
+"Add a Prowlarr, Jackett or NZBHydra2 service in Settings to search and manage your indexers." = "Füge in den Einstellungen einen Prowlarr-, Jackett- oder NZBHydra2-Dienst hinzu, um deine Indexer zu durchsuchen und zu verwalten.";
+"%@ · %lld categories" = "%@ · %lld Kategorien";
+"Docker — %lld/%lld running" = "Docker — %lld/%lld aktiv";
+"Start/stop containers from this host's SSH service (Docker tab)." = "Container über den SSH-Dienst dieses Hosts starten/stoppen (Docker-Tab).";
+"System · Array · Docker" = "System · Array · Docker";
+
+/* Independent service sections + monitoring filters */
+"7 days" = "7 Tage";
+"30 days" = "30 Tage";
+"90 days" = "90 Tage";
+"%lld days" = "%lld Tage";
+"Range" = "Zeitraum";
+"No Tautulli" = "Kein Tautulli";
+"Add a Tautulli service in Settings to see playback statistics." = "Füge in den Einstellungen einen Tautulli-Dienst hinzu, um Wiedergabestatistiken zu sehen.";
+"No Jellystat" = "Kein Jellystat";
+"Add a Jellystat service in Settings to see playback statistics." = "Füge in den Einstellungen einen Jellystat-Dienst hinzu, um Wiedergabestatistiken zu sehen.";
+"No Unraid" = "Kein Unraid";
+"Add an Unraid service in Settings to see system, array and Docker status." = "Füge in den Einstellungen einen Unraid-Dienst hinzu, um System-, Array- und Docker-Status zu sehen.";
+"No SSH services" = "Keine SSH-Dienste";
+"Add an SSH service in Settings for a terminal, host stats and a file browser." = "Füge in den Einstellungen einen SSH-Dienst hinzu für Terminal, Host-Statistiken und Dateibrowser.";

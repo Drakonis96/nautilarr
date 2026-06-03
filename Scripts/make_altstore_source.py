@@ -28,6 +28,21 @@ DESCRIPTION = (
     "adaptive interface for iPhone, iPad and Mac."
 )
 
+# Permissions the IPA actually requests. AltStore 2.0+ verifies these against
+# the downloaded .ipa and warns the user if the source under-declares them, so
+# this MUST mirror the app's Info.plist usage descriptions (and any custom
+# entitlements — there are none beyond the defaults AltStore exempts).
+# Keep in sync with project.yml `info.properties`.
+APP_PERMISSIONS = {
+    "entitlements": [],
+    "privacy": {
+        "NSLocalNetworkUsageDescription":
+            "Nautilarr connects to your self-hosted services on your local network.",
+        "NSFaceIDUsageDescription":
+            "Nautilarr uses Face ID to protect SSH access and settings.",
+    },
+}
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -49,6 +64,7 @@ def main() -> int:
         "downloadURL": args.download_url,
         "size": size,
         "minOSVersion": MIN_OS,
+        "appPermissions": APP_PERMISSIONS,
     }
 
     # Preserve prior versions if the source already exists.
@@ -77,6 +93,7 @@ def main() -> int:
                 "tintColor": TINT,
                 "category": "utilities",
                 "screenshotURLs": [],
+                "appPermissions": APP_PERMISSIONS,
                 "versions": versions,
                 # Legacy top-level fields for older AltStore versions:
                 "version": version_entry["version"],

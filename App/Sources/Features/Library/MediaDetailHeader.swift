@@ -12,7 +12,10 @@ struct DetailRating: Identifiable {
     let label: String
     let value: String
     let color: Color
+    /// SF Symbol fallback when no brand logo is supplied.
     let systemImage: String?
+    /// Bundled brand logo (vector PDF imageset), preferred over `systemImage`.
+    var assetName: String? = nil
 }
 
 /// Everything the rich detail header needs, built by the movie/series views.
@@ -139,19 +142,39 @@ struct MediaDetailHeader: View {
         .font(.caption).foregroundStyle(.secondary)
     }
 
+    /// Rating chips. Each is fixed-size and the row scrolls horizontally, so the
+    /// chips never get squished into illegible blobs when the column is narrow
+    /// (e.g. a large Dynamic Type size next to the poster).
     private var ratingsRow: some View {
-        HStack(spacing: 8) {
-            ForEach(data.ratings) { rating in
-                HStack(spacing: 3) {
-                    if let symbol = rating.systemImage { Image(systemName: symbol).font(.caption2) }
-                    Text(rating.value).font(.caption.weight(.bold))
-                    Text(LocalizedStringKey(rating.label)).font(.system(size: 9, weight: .semibold))
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(data.ratings) { rating in
+                    ratingChip(rating)
                 }
-                .padding(.horizontal, 8).padding(.vertical, 4)
-                .background(rating.color.opacity(0.20), in: Capsule())
-                .foregroundStyle(rating.color)
             }
         }
+    }
+
+    private func ratingChip(_ rating: DetailRating) -> some View {
+        HStack(spacing: 4) {
+            if let asset = rating.assetName {
+                Image(asset)
+                    .renderingMode(.original)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 16, height: 16)
+            } else if let symbol = rating.systemImage {
+                Image(systemName: symbol).font(.caption2)
+            }
+            Text(rating.value)
+                .font(.caption.weight(.bold))
+                .lineLimit(1)
+                .fixedSize()
+        }
+        .padding(.horizontal, 9).padding(.vertical, 5)
+        .background(rating.color.opacity(0.20), in: Capsule())
+        .foregroundStyle(rating.color)
+        .fixedSize()
     }
 
     private var genreChips: some View {

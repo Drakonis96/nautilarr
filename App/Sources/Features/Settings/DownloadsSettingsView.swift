@@ -12,8 +12,25 @@ struct DownloadsSettingsView: View {
         instanceStore.instancesInActiveNetwork.filter { Self.clientTypes.contains($0.type) }
     }
 
+    private var arrInstances: [ServiceInstance] {
+        instanceStore.instancesInActiveNetwork.filter { $0.type == .sonarr || $0.type == .radarr }
+    }
+
     var body: some View {
         Form {
+            if !arrInstances.isEmpty {
+                Section {
+                    NavigationLink {
+                        ArrDownloadClientsView().appBackground(settings.background)
+                    } label: {
+                        Label("Sonarr / Radarr download clients", systemImage: "externaldrive.connected.to.line.below")
+                    }
+                } footer: {
+                    Text("Enable or disable the download clients configured inside each Sonarr and Radarr instance, and test them.")
+                }
+                .tintedCards()
+            }
+
             if !clients.isEmpty {
                 Section {
                     ForEach(clients) { client in

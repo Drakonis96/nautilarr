@@ -267,6 +267,9 @@ private struct ServiceTypeSelectionList: View {
                                     Image(systemName: "checkmark").foregroundStyle(Theme.teal)
                                 }
                             }
+                            // Make the whole row (including the empty space next to
+                            // the Spacer) tappable, not just the icon/name.
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                     }

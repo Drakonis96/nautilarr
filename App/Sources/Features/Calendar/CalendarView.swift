@@ -8,6 +8,9 @@ struct CalendarView: View {
     @StateObject private var model = CalendarViewModel()
     @AppStorage("calendarMonthView") private var monthView = false
     @Environment(\.horizontalSizeClass) private var hSize
+    /// Auto-scroll the timeline to today only once, when entries first arrive, so
+    /// it doesn't fight the user after they've scrolled.
+    @State private var didScrollToToday = false
 
     /// The month grid is only offered on roomy layouts (iPad/Mac); iPhone shows
     /// the list/timeline only.
@@ -69,25 +72,42 @@ struct CalendarView: View {
     }
 
     private var timeline: some View {
-        List {
-            ForEach(model.days) { day in
-                Section {
-                    ForEach(day.entries) { entry in
-                        if let media = entry.mediaEntry {
-                            NavigationLink(value: media) { CalendarRow(entry: entry) }
-                        } else {
-                            CalendarRow(entry: entry)
+        ScrollViewReader { proxy in
+            List {
+                ForEach(model.days) { day in
+                    Section {
+                        ForEach(day.entries) { entry in
+                            if let media = entry.mediaEntry {
+                                NavigationLink(value: media) { CalendarRow(entry: entry) }
+                            } else {
+                                CalendarRow(entry: entry)
+                            }
                         }
+                    } header: {
+                        Text(day.date, format: .dateTime.weekday(.wide).month().day())
                     }
-                } header: {
-                    Text(day.date, format: .dateTime.weekday(.wide).month().day())
-                }
-                .tintedCards()
-            }
-            if model.days.isEmpty && !model.isLoading {
-                Text("Nothing scheduled.").foregroundStyle(.secondary)
                     .tintedCards()
+                    .id(day.id)
+                }
+                if model.days.isEmpty && !model.isLoading {
+                    Text("Nothing scheduled.").foregroundStyle(.secondary)
+                        .tintedCards()
+                }
             }
+            // When entries first arrive, jump to the day nearest today (the first
+            // on/after today, or the latest past day if everything is in the past)
+            // so the calendar opens on what's relevant, not weeks of history.
+            .onChange(of: model.days.map(\.id)) { _, _ in scrollToToday(proxy) }
+        }
+    }
+
+    private func scrollToToday(_ proxy: ScrollViewProxy) {
+        guard !didScrollToToday, !model.days.isEmpty else { return }
+        let today = Calendar.current.startOfDay(for: Date())
+        guard let target = model.days.first(where: { $0.date >= today }) ?? model.days.last else { return }
+        didScrollToToday = true
+        DispatchQueue.main.async {
+            withAnimation(.easeInOut) { proxy.scrollTo(target.id, anchor: .top) }
         }
     }
 

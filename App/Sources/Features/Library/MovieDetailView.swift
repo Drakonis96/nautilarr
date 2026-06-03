@@ -189,10 +189,10 @@ struct MovieDetailView: View {
     private var ratings: [DetailRating] {
         guard let r = movie.ratings else { return [] }
         var out: [DetailRating] = []
-        if let v = r.imdb?.value { out.append(.init(label: "IMDb", value: String(format: "%.1f", v), color: .yellow, systemImage: "star.fill")) }
-        if let v = r.tmdb?.value { out.append(.init(label: "TMDB", value: String(format: "%.1f", v), color: Theme.teal, systemImage: nil)) }
-        if let v = r.rottenTomatoes?.value, v > 0 { out.append(.init(label: "RT", value: "\(Int(v))%", color: .red, systemImage: nil)) }
-        if let v = r.metacritic?.value, v > 0 { out.append(.init(label: "MC", value: "\(Int(v))", color: .green, systemImage: nil)) }
+        if let v = r.imdb?.value { out.append(.init(label: "IMDb", value: String(format: "%.1f", v), color: Color(red: 0.96, green: 0.77, blue: 0.09), systemImage: "star.fill", assetName: "rating-imdb")) }
+        if let v = r.tmdb?.value { out.append(.init(label: "TMDB", value: String(format: "%.1f", v), color: Color(red: 0.0, green: 0.71, blue: 0.89), systemImage: nil, assetName: "rating-tmdb")) }
+        if let v = r.rottenTomatoes?.value, v > 0 { out.append(.init(label: "RT", value: "\(Int(v))%", color: Color(red: 0.98, green: 0.20, blue: 0.04), systemImage: nil, assetName: "rating-rt")) }
+        if let v = r.metacritic?.value, v > 0 { out.append(.init(label: "MC", value: "\(Int(v))", color: Color(red: 1.0, green: 0.80, blue: 0.20), systemImage: nil, assetName: "rating-mc")) }
         return out
     }
 

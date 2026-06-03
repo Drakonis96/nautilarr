@@ -435,3 +435,67 @@
 
 /* Easter egg */
 "Arr, sailor!" = "Arr, matelot !";
+
+/* Sonarr/Radarr download clients + navigation aids */
+"Download Clients" = "Clients de téléchargement";
+"Sonarr / Radarr download clients" = "Clients de téléchargement Sonarr / Radarr";
+"Enable or disable the download clients configured inside each Sonarr and Radarr instance, and test them." = "Activez ou désactivez les clients de téléchargement configurés dans chaque instance Sonarr et Radarr, et testez-les.";
+"No Sonarr or Radarr" = "Aucun Sonarr ni Radarr";
+"Add a Sonarr or Radarr service to manage its download clients." = "Ajoutez un service Sonarr ou Radarr pour gérer ses clients de téléchargement.";
+"No download clients configured." = "Aucun client de téléchargement configuré.";
+"Searching providers…" = "Recherche chez les fournisseurs…";
+"Scroll-to-top button" = "Bouton de retour en haut";
+"Navigation Aids" = "Aides à la navigation";
+"Shows a floating button in the bottom-left corner of every screen that jumps back to the top." = "Affiche un bouton flottant dans le coin inférieur gauche de chaque écran qui revient en haut.";
+
+/* Tautulli / Jellystat statistics dashboards */
+"Activity" = "Activité";
+"History" = "Historique";
+"Users" = "Utilisateurs";
+"Libraries" = "Bibliothèques";
+"Statistics" = "Statistiques";
+"Terminate" = "Arrêter";
+"Terminate this stream?" = "Arrêter ce flux ?";
+"Nothing is playing right now." = "Rien n’est en cours de lecture.";
+"No watch history yet." = "Aucun historique de lecture pour le moment.";
+"No statistics for this period." = "Aucune statistique pour cette période.";
+"No users." = "Aucun utilisateur.";
+"No libraries." = "Aucune bibliothèque.";
+"No user activity." = "Aucune activité utilisateur.";
+"Most Watched Movies" = "Films les plus regardés";
+"Most Watched Series" = "Séries les plus regardées";
+"Most Active Users" = "Utilisateurs les plus actifs";
+"Statistic" = "Statistique";
+"Activity · History · Stats · Users · Libraries" = "Activité · Historique · Stats · Utilisateurs · Bibliothèques";
+"Activity · Users · Libraries · Stats" = "Activité · Utilisateurs · Bibliothèques · Stats";
+"%lld plays" = "%lld lectures";
+"%lld items" = "%lld éléments";
+"%lld seasons" = "%lld saisons";
+"%lld episodes" = "%lld épisodes";
+
+/* Indexers unification + Unraid dashboard + downloads manage */
+"Cores" = "Cœurs";
+"Uptime" = "Disponibilité";
+"No data." = "Aucune donnée.";
+"Manage client" = "Gérer le client";
+"Type above to search this indexer for any release." = "Saisissez ci-dessus pour rechercher une publication sur cet indexeur.";
+"Add a Prowlarr, Jackett or NZBHydra2 service in Settings to search and manage your indexers." = "Ajoutez un service Prowlarr, Jackett ou NZBHydra2 dans les Réglages pour rechercher et gérer vos indexeurs.";
+"%@ · %lld categories" = "%@ · %lld catégories";
+"Docker — %lld/%lld running" = "Docker — %lld/%lld en cours";
+"Start/stop containers from this host's SSH service (Docker tab)." = "Démarrez/arrêtez les conteneurs depuis le service SSH de cet hôte (onglet Docker).";
+"System · Array · Docker" = "Système · Array · Docker";
+
+/* Independent service sections + monitoring filters */
+"7 days" = "7 jours";
+"30 days" = "30 jours";
+"90 days" = "90 jours";
+"%lld days" = "%lld jours";
+"Range" = "Période";
+"No Tautulli" = "Aucun Tautulli";
+"Add a Tautulli service in Settings to see playback statistics." = "Ajoutez un service Tautulli dans les Réglages pour voir les statistiques de lecture.";
+"No Jellystat" = "Aucun Jellystat";
+"Add a Jellystat service in Settings to see playback statistics." = "Ajoutez un service Jellystat dans les Réglages pour voir les statistiques de lecture.";
+"No Unraid" = "Aucun Unraid";
+"Add an Unraid service in Settings to see system, array and Docker status." = "Ajoutez un service Unraid dans les Réglages pour voir l’état du système, de la grappe et de Docker.";
+"No SSH services" = "Aucun service SSH";
+"Add an SSH service in Settings for a terminal, host stats and a file browser." = "Ajoutez un service SSH dans les Réglages pour un terminal, des statistiques d’hôte et un explorateur de fichiers.";

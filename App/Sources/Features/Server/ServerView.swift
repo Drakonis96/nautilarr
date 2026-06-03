@@ -1,37 +1,15 @@
 import SwiftUI
 import NautilarrCore
 
-/// Server tools hub. Phase 1 shows configured services and their reachability;
-/// SSH terminal, SFTP browsing and host stats arrive in Phase 3. SSH is gated
-/// behind a Mac Catalyst compatibility check at build time.
+/// Server overview: at-a-glance monitoring summaries and the full list of
+/// configured services. Deep per-service tools (Tautulli, Jellystat, Unraid,
+/// SSH) live in their own top-level sections.
 struct ServerView: View {
     @EnvironmentObject private var instanceStore: InstanceStore
     @StateObject private var model = ServerViewModel()
 
-    private var sshInstances: [ServiceInstance] { instanceStore.instances(ofType: .ssh) }
-
     var body: some View {
         List {
-            if !sshInstances.isEmpty {
-                Section("SSH & SFTP") {
-                    ForEach(sshInstances) { instance in
-                        NavigationLink {
-                            SSHDetailView(instance: instance)
-                        } label: {
-                            HStack(spacing: 12) {
-                                ServiceIcon(type: .ssh, size: 24)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(instance.name)
-                                    Text("Live charts · Terminal · Host stats · Files")
-                                        .font(.caption).foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                    }
-                }
-                .tintedCards()
-            }
-
             if !model.lines.isEmpty {
                 Section("Monitoring") {
                     ForEach(model.lines) { line in
@@ -69,16 +47,6 @@ struct ServerView: View {
                 }
             }
             .tintedCards()
-
-            if sshInstances.isEmpty {
-                Section {
-                    Label("Live host charts (CPU · RAM · network)", systemImage: "chart.xyaxis.line")
-                        .foregroundStyle(.secondary)
-                } footer: {
-                    sshAvailabilityFooter
-                }
-                .tintedCards()
-            }
         }
         .overlay { if model.isLoading && model.lines.isEmpty { ProgressView() } }
         .refreshable { await model.load(store: instanceStore) }
@@ -93,9 +61,5 @@ struct ServerView: View {
         .onReceive(NotificationCenter.default.publisher(for: .nautilarrRefresh)) { _ in
             Task { await model.load(store: instanceStore) }
         }
-    }
-
-    private var sshAvailabilityFooter: some View {
-        Text("SSH/SFTP use a pure-Swift client (SwiftNIO SSH) — no paid entitlements. Add an SSH service to get a terminal, host stats and a file browser.")
     }
 }

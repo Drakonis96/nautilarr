@@ -14,8 +14,9 @@ final class AppSettings: ObservableObject {
 
     /// Current default-tab-order version. Bump when the built-in order changes so
     /// existing installs adopt it once (their custom reorder is reset that once).
-    /// v3 places the Plex/Jellyfin shortcuts right after Home.
-    private static let currentTabOrderVersion = 3
+    /// v3 placed the Plex/Jellyfin shortcuts after Home; v4 adds the independent
+    /// Tautulli/Jellystat/Unraid/SSH sections before Server.
+    private static let currentTabOrderVersion = 4
 
     init() {
         // One-time migration: adopt the new built-in section order (Subtitles
@@ -36,6 +37,14 @@ final class AppSettings: ObservableObject {
     }
     @AppStorage("autoRefreshSeconds") var autoRefreshSeconds: Int = 5
     @AppStorage("notificationsEnabled") var notificationsEnabled: Bool = false
+
+    // Appearance — floating "scroll to top" button (bottom-left, every screen).
+    @AppStorage("showScrollToTopButton") private var scrollToTopEnabledStored: Bool = true
+    /// Whether the floating scroll-to-top button is shown app-wide.
+    var scrollToTopEnabled: Bool {
+        get { scrollToTopEnabledStored }
+        set { objectWillChange.send(); scrollToTopEnabledStored = newValue }
+    }
 
     // Advanced — networking timeouts (seconds).
     @AppStorage("httpTimeout") private var httpTimeoutStored: Int = 60

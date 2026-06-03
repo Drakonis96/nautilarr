@@ -1,4 +1,5 @@
 import SwiftUI
+import NautilarrCore
 
 /// The top-level navigation destinations, shown as a sidebar on iPad/Mac and a
 /// tab bar on iPhone.
@@ -13,6 +14,10 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
     case downloads
     case requests
     case indexers
+    case tautulli
+    case jellystat
+    case unraid
+    case ssh
     case server
     case settings
 
@@ -30,6 +35,10 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         case .requests: return "Requests"
         case .indexers: return "Indexers"
         case .subtitles: return "Subtitles"
+        case .tautulli: return "Tautulli"
+        case .jellystat: return "Jellystat"
+        case .unraid: return "Unraid"
+        case .ssh: return "SSH / SFTP"
         case .server: return "Server"
         case .settings: return "Settings"
         }
@@ -47,6 +56,10 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         case .requests: return "tray.and.arrow.down"
         case .indexers: return "magnifyingglass.circle"
         case .subtitles: return "captions.bubble"
+        case .tautulli: return "chart.bar.xaxis"
+        case .jellystat: return "chart.bar.xaxis"
+        case .unraid: return "server.rack"
+        case .ssh: return "terminal"
         case .server: return "server.rack"
         case .settings: return "gearshape"
         }
@@ -61,6 +74,36 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    /// The bundled service logo shown in navigation for service-specific
+    /// destinations (Tautulli/Jellystat/Unraid). `nil` falls back to the SF Symbol.
+    var serviceLogoAsset: String? {
+        switch self {
+        case .tautulli: return "service-tautulli"
+        case .jellystat: return "service-jellystat"
+        case .unraid: return "service-unraid"
+        default: return nil
+        }
+    }
+
+    /// Service type this destination is bound to — the section only appears when
+    /// at least one instance of it is configured. `nil` = always available.
+    var requiredServiceType: ServiceType? {
+        switch self {
+        case .tautulli: return .tautulli
+        case .jellystat: return .jellystat
+        case .unraid: return .unraid
+        case .ssh: return .ssh
+        default: return nil
+        }
+    }
+
+    /// Whether this destination should be shown given the configured services.
+    @MainActor
+    func isConfigured(in store: InstanceStore) -> Bool {
+        guard let type = requiredServiceType else { return true }
+        return !store.instances(ofType: type).isEmpty
+    }
+
     /// Navigation label — uses the service's coloured logo for media shortcuts,
     /// otherwise the SF Symbol.
     @ViewBuilder var navLabel: some View {
@@ -69,6 +112,12 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         } icon: {
             if let shortcut = mediaShortcut {
                 Image(shortcut.logoAssetName)
+                    .renderingMode(.original)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 22, height: 22)
+            } else if let asset = serviceLogoAsset {
+                Image(asset)
                     .renderingMode(.original)
                     .resizable()
                     .scaledToFit()

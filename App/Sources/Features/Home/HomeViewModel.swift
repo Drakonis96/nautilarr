@@ -323,7 +323,8 @@ final class HomeViewModel: ObservableObject {
             return [.streams(streams),
                     .stat(ServiceStat(instanceName: instance.name, type: .tautulli,
                                       headline: "\(activity.count) Streaming",
-                                      metrics: [Metric(label: "Active", value: "\(activity.count)")]))]
+                                      metrics: [Metric(label: "Active", value: "\(activity.count)")],
+                                      instanceID: instance.id))]
         } catch {
             return [.stat(errorStat(instance, .tautulli, error))]
         }
@@ -340,7 +341,8 @@ final class HomeViewModel: ObservableObject {
             return [.streams(streams),
                     .stat(ServiceStat(instanceName: instance.name, type: .jellystat,
                                       headline: "\(sessions.count) Streaming",
-                                      metrics: [Metric(label: "Active", value: "\(sessions.count)")]))]
+                                      metrics: [Metric(label: "Active", value: "\(sessions.count)")],
+                                      instanceID: instance.id))]
         } catch {
             return [.stat(errorStat(instance, .jellystat, error))]
         }

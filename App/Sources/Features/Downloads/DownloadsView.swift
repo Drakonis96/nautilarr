@@ -60,6 +60,17 @@ struct DownloadsView: View {
         .task(id: settings.autoRefreshSeconds) { await autoRefreshLoop() }
         .toolbar {
             if model.hasServices { globalActions }
+            // When a single download client is selected via the service filter,
+            // offer its per-client management (add magnet/NZB, speed limit).
+            if let client = selectedClientInstance {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        DownloadClientView(instance: client)
+                    } label: {
+                        Label("Manage client", systemImage: "slider.horizontal.3")
+                    }
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 RefreshSpinnerButton(isLoading: model.isLoading) { Task { await reload() } }
             }
@@ -174,6 +185,14 @@ struct DownloadsView: View {
     }
 
     // MARK: Filtering & sorting
+
+    /// The download-client instance currently isolated by the service filter, if
+    /// any — used to surface its per-client management screen.
+    private var selectedClientInstance: ServiceInstance? {
+        guard let sourceFilter else { return nil }
+        let clientTypes: Set<ServiceType> = [.qbittorrent, .transmission, .deluge, .sabnzbd, .nzbget]
+        return instanceStore.instancesInActiveNetwork.first { $0.name == sourceFilter && clientTypes.contains($0.type) }
+    }
 
     /// Items after the service-tab filter (used to compute available statuses).
     private var scopedItems: [UnifiedDownload] {

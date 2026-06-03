@@ -101,6 +101,42 @@ final class RadarrClientTests: XCTestCase {
         XCTAssertEqual(json?["rootFolderPath"] as? String, "/movies2")
         XCTAssertEqual(json?["moveFiles"] as? Bool, true)
     }
+
+    func testDownloadClientsDecode() async throws {
+        var path: String?
+        let client = makeClient { request in
+            path = request.url?.path
+            let body = #"[{"id":5,"name":"Deluge","enable":true,"protocol":"torrent","implementation":"Deluge","priority":1}]"#
+            return (200, body.data(using: .utf8)!)
+        }
+        let clients = try await client.downloadClients()
+        XCTAssertEqual(path, "/api/v3/downloadclient")
+        XCTAssertEqual(clients.count, 1)
+        XCTAssertEqual(clients[0].name, "Deluge")
+        XCTAssertEqual(clients[0].implementation, "Deluge")
+        XCTAssertEqual(clients[0].enable, true)
+    }
+
+    func testSetDownloadClientEnabledRoundTripsPreservingFields() async throws {
+        var putMethod: String?; var putPath: String?; var putBody: Data?
+        let client = makeClient { request in
+            if request.httpMethod == "GET" {
+                let body = #"{"id":5,"name":"Deluge","enable":false,"protocol":"torrent","fields":[{"name":"host","value":"x"}]}"#
+                return (200, body.data(using: .utf8)!)
+            }
+            putMethod = request.httpMethod
+            putPath = request.url?.path
+            putBody = request.httpBody ?? request.bodyStreamData()
+            return (200, Data())
+        }
+        try await client.setDownloadClientEnabled(id: 5, enabled: true)
+        XCTAssertEqual(putMethod, "PUT")
+        XCTAssertEqual(putPath, "/api/v3/downloadclient/5")
+        let json = try JSONSerialization.jsonObject(with: XCTUnwrap(putBody)) as? [String: Any]
+        XCTAssertEqual(json?["enable"] as? Bool, true)
+        XCTAssertEqual(json?["id"] as? Int, 5)
+        XCTAssertNotNil(json?["fields"]) // unmapped fields survive the round-trip
+    }
 }
 
 private extension URLRequest {

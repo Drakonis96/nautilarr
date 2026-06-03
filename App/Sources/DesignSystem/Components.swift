@@ -200,7 +200,13 @@ struct SearchField: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+            // The magnifier doubles as a tappable search button, so the search
+            // can be triggered without a hardware return key (e.g. on Mac).
+            Button(action: onSubmit) {
+                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Search")
             TextField(prompt, text: $text)
                 .textFieldStyle(.plain)
                 .autocorrectionDisabled()
@@ -217,6 +223,43 @@ struct SearchField: View {
         .padding(.horizontal, 12).padding(.vertical, 9)
         .glassChip()
         .overlay(Capsule().strokeBorder(Color.hairline.opacity(0.6)))
+    }
+}
+
+/// A compact glass segmented control where only the **selected** segment shows
+/// its label; the others are icon-only. Ideal for bars with many segments (where
+/// a stock `.segmented` Picker truncates the labels). Uses Liquid Glass.
+struct GlassSegmentedBar<Tag: Hashable & Identifiable>: View {
+    let tags: [Tag]
+    let title: (Tag) -> LocalizedStringKey
+    let systemImage: (Tag) -> String
+    @Binding var selection: Tag
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(tags) { tag in
+                let isSelected = tag == selection
+                Button {
+                    withAnimation(.snappy(duration: 0.22)) { selection = tag }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: systemImage(tag))
+                        if isSelected { Text(title(tag)).lineLimit(1).fixedSize() }
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, isSelected ? 14 : 11)
+                    .padding(.vertical, 8)
+                    .foregroundStyle(isSelected ? Color.white : Color.secondary)
+                    .background { if isSelected { Capsule().fill(Color.accentColor) } }
+                    .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(title(tag))
+            }
+        }
+        .padding(4)
+        .glassChip()
+        .overlay(Capsule().strokeBorder(Color.hairline.opacity(0.5)))
     }
 }
 
@@ -324,6 +367,15 @@ enum Format {
 
     static func percent(_ fraction: Double) -> String {
         "\(Int((fraction * 100).rounded()))%"
+    }
+
+    /// A compact watch-time string from a number of seconds (e.g. "3h 12m").
+    static func duration(_ seconds: Int?) -> String {
+        guard let seconds, seconds > 0 else { return "—" }
+        let h = seconds / 3600, m = (seconds % 3600) / 60
+        if h > 0 { return "\(h)h \(m)m" }
+        if m > 0 { return "\(m)m" }
+        return "\(seconds)s"
     }
 }
 

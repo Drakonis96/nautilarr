@@ -222,4 +222,34 @@ public struct SonarrClient: Sendable {
     public func rootFolders() async throws -> [SonarrRootFolder] {
         try await api.send(.get("\(Self.base)/rootfolder"))
     }
+
+    // MARK: - Download clients
+
+    /// Download clients configured inside this Sonarr instance.
+    public func downloadClients() async throws -> [ArrDownloadClient] {
+        try await api.send(.get("\(Self.base)/downloadclient"))
+    }
+
+    /// Enables or disables one of Sonarr's download clients. Fetches the full
+    /// client JSON, flips `enable` and PUTs it back, so every field the minimal
+    /// `ArrDownloadClient` model doesn't map is preserved.
+    public func setDownloadClientEnabled(id: Int, enabled: Bool) async throws {
+        let data = try await api.sendReturningData(.get("\(Self.base)/downloadclient/\(id)"))
+        guard var dict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw APIError.invalidResponse
+        }
+        dict["enable"] = enabled
+        let endpoint = try Endpoint.jsonObject("\(Self.base)/downloadclient/\(id)", method: .put, object: dict)
+        try await api.send(endpoint)
+    }
+
+    /// Tests one of Sonarr's download clients. Throws on failure.
+    public func testDownloadClient(id: Int) async throws {
+        let data = try await api.sendReturningData(.get("\(Self.base)/downloadclient/\(id)"))
+        guard let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw APIError.invalidResponse
+        }
+        let endpoint = try Endpoint.jsonObject("\(Self.base)/downloadclient/test", method: .post, object: dict)
+        try await api.send(endpoint)
+    }
 }

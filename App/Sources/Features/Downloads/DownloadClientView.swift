@@ -155,6 +155,7 @@ final class DownloadClientViewModel: ObservableObject {
 
 struct DownloadClientView: View {
     @EnvironmentObject private var instanceStore: InstanceStore
+    @EnvironmentObject private var settings: AppSettings
     @StateObject private var model: DownloadClientViewModel
     @State private var pendingRemoval: DownloadClientViewModel.Item?
     @State private var showAddMagnet = false
@@ -208,6 +209,7 @@ struct DownloadClientView: View {
             }
         }
         .navigationTitle(model.instance.name)
+        .appBackground(settings.background)
         .overlay { if model.isLoading && model.items.isEmpty { ProgressView() } }
         .overlay(alignment: .bottom) { Toast(message: model.status) { model.status = nil } }
         .refreshable { await model.load(store: instanceStore) }

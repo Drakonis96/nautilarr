@@ -48,7 +48,6 @@ struct ProwlarrIndexersView: View {
             }
             .tintedCards()
         }
-        .navigationTitle("Indexers")
         .overlay { if isLoading && indexers.isEmpty { ProgressView() } }
         .overlay(alignment: .bottom) { Toast(message: status) { status = nil } }
         .refreshable { await load() }

@@ -9,9 +9,9 @@ struct HomePullKey: PreferenceKey {
 
 /// The Nautilarr submarine, hanging from an anchor chain that drops **from the
 /// Dynamic Island** at the very top of the screen. The chain is always visible.
-/// The sea is calm and unaffected by the pull — only the sub (and the chain it
-/// hangs from) move: dragging down lowers the sub into the deep, and on release
-/// the chain hauls it back up *slowly* while the dashboard reloads.
+/// Only the sub (and the chain it hangs from) move: dragging down lowers the sub
+/// into the deep, and on release the chain hauls it back up *slowly* while the
+/// dashboard reloads. Tapping the captain pops a comic speech bubble.
 ///
 /// Rendered as a top overlay that ignores the top safe area, so the chain's
 /// origin tucks behind the Dynamic Island and reads as attached to it.
@@ -23,17 +23,30 @@ struct OceanHeader: View {
     /// Dive depth at the moment of release (the rise interpolates this → 0).
     var riseFrom: CGFloat = 0
     var refreshing: Bool = false
-    var accent: Color = Theme.teal
 
-    /// Comic speech-bubble easter egg: tap the captain to make him say his line.
+    /// Comic speech-bubble easter egg: tap the captain to make him say a line.
+    /// Lines are picked at random (avoiding an immediate repeat) on each tap.
     @State private var speaking = false
     @State private var speakTask: Task<Void, Never>?
+    @State private var message: LocalizedStringKey = "Arr, sailor!"
+
+    /// Localized one-liners the captain says, cycled randomly. These reuse the
+    /// existing easter-egg catalog keys.
+    private let messages: [LocalizedStringKey] = [
+        "Arr, sailor!",
+        "Can you stop, please?",
+        "Arrr… stop now.",
+        "That won't help, will it?",
+        "Seriously, quit poking me!",
+        "I'm trying to sail here.",
+        "You again? Really?"
+    ]
 
     /// How long the chain takes to haul the sub back up — slow and gradual.
     private let riseDuration: Double = 2.6
     /// Where the chain leaves the Dynamic Island (screen-top coordinates).
     private let islandY: CGFloat = 6
-    /// The calm sea's surface line (screen-top coordinates).
+    /// The submarine's resting waterline (screen-top coordinates).
     private let surfaceY: CGFloat = 124
     /// How far down the sub travels at full dive.
     private let diveRange: CGFloat = 88
@@ -46,9 +59,9 @@ struct OceanHeader: View {
         GeometryReader { geo in
             let w = geo.size.width
             ZStack(alignment: .topLeading) {
-                // The animated ocean (waves + chain + sub). The tap gesture lives
-                // OUTSIDE this TimelineView — it re-renders ~60fps and would keep
-                // tearing down a gesture placed inside, dropping taps.
+                // The animated chain + submarine. The tap gesture lives OUTSIDE
+                // this TimelineView — it re-renders ~60fps and would keep tearing
+                // down a gesture placed inside, dropping taps.
                 TimelineView(.animation) { timeline in
                     let now = timeline.date
                     let t = now.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3600)
@@ -72,27 +85,32 @@ struct OceanHeader: View {
                             .position(x: w / 2, y: islandY + chainLen / 2)
                         submarine(t: t)
                             .position(x: w / 2, y: subCenterY)
-                        // Calm sea drawn last so the sub sits half-submerged.
-                        sea(t: t, width: w)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 }
                 .allowsHitTesting(false)
 
-                // Tap anywhere across the ocean band → the captain speaks.
+                // Tap ONLY the submarine → the captain speaks. Laid out with
+                // alignment + offset (NOT `.position`, whose hit area behaved
+                // unreliably here) and kept OUTSIDE the TimelineView so the
+                // gesture isn't torn down every frame.
                 Color.clear
-                    .frame(width: w, height: bandHeight)
+                    .frame(width: 168, height: 150)
                     .contentShape(Rectangle())
-                    .position(x: w / 2, y: bandHeight / 2)
                     .onTapGesture { speak() }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .offset(y: surfaceY + 8 - 75)
 
-                // The captain's line floats to his right (open water, at the
-                // resting waterline — always clear of the title above).
+                // The captain's line pops out of the porthole: up and to his
+                // right, its tail aimed back down-left at the captain. Scaling
+                // from the tail (.bottomLeading) makes it look like it emerges
+                // FROM him, not slide up from below.
                 if speaking {
-                    ComicBubble()
-                        .position(x: w / 2 + 98, y: surfaceY - 12)
+                    ComicBubble(message: message)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .offset(x: 92, y: surfaceY - 34)
                         .allowsHitTesting(false)
-                        .transition(.scale(scale: 0.5, anchor: .bottomLeading).combined(with: .opacity))
+                        .transition(.scale(scale: 0.35, anchor: .bottomLeading).combined(with: .opacity))
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -100,8 +118,14 @@ struct OceanHeader: View {
         }
     }
 
-    /// Pop the captain's speech bubble, auto-hiding it after a moment.
+    /// Pop the captain's speech bubble with a fresh random line, auto-hiding it
+    /// after a moment.
     private func speak() {
+        if messages.count > 1 {
+            var next = message
+            while next == message { next = messages.randomElement() ?? message }
+            message = next
+        }
         speaking = true
         speakTask?.cancel()
         speakTask = Task { @MainActor in
@@ -110,23 +134,10 @@ struct OceanHeader: View {
         }
     }
 
-    /// The calm sea band: three superposed wave layers at a fixed surface line.
-    private func sea(t: Double, width: CGFloat) -> some View {
-        let bandHeight: CGFloat = 84
-        return ZStack(alignment: .top) {
-            WaterLayer(t: t, layer: 0).fill(accent.opacity(0.16))
-            WaterLayer(t: t, layer: 1).fill(accent.opacity(0.30))
-            WaterLayer(t: t, layer: 2).fill(accent.opacity(0.42))
-        }
-        .frame(width: width, height: bandHeight)
-        // Position the band so its surface (top) sits at `surfaceY`.
-        .offset(y: surfaceY)
-    }
-
     private func submarine(t: Double) -> some View {
         // Hangs upright from the chain with a gentle sway; faces left (unmirrored).
         let tilt = 3.0 * sin(t * 1.0)
-        return Image("AppLogo")              // original colours — only the waves take the accent
+        return Image("AppLogo")              // original colours
             .resizable()
             .scaledToFit()
             .frame(width: 104, height: 104)
@@ -137,8 +148,9 @@ struct OceanHeader: View {
 
 /// A comic speech bubble for the captain's easter-egg line (localized).
 private struct ComicBubble: View {
+    var message: LocalizedStringKey = "Arr, sailor!"
     var body: some View {
-        Text("Arr, sailor!")
+        Text(message)
             .font(.system(.footnote, design: .rounded).weight(.heavy))
             .foregroundStyle(.black)
             .padding(.horizontal, 13)
@@ -196,35 +208,3 @@ private struct AnchorChain: View {
     }
 }
 
-/// One organic water layer at a fixed (calm) amplitude: several sine waves of
-/// different frequency/phase superposed so the surface never looks like a single
-/// repeating sine. Fills downward from its surface line.
-private struct WaterLayer: Shape {
-    var t: Double
-    var layer: Int
-
-    func path(in rect: CGRect) -> Path {
-        let amp = (2.5 + 0.25 * 9.0) * (1.0 + Double(layer) * 0.25)   // constant, calm
-        let baseline = rect.height * (0.04 + Double(layer) * 0.10)
-        // Negative drift → waves travel in the opposite direction to before.
-        let phase = -t * (0.9 + Double(layer) * 0.4) + Double(layer) * 2.3
-        let w = max(Double(rect.width), 1)
-
-        var path = Path()
-        path.move(to: CGPoint(x: 0, y: baseline))
-        var x: CGFloat = 0
-        while x <= rect.width {
-            let rel = Double(x) / w
-            let y = baseline
-                + sin(rel * 2 * .pi * (1.4 + Double(layer) * 0.5) + phase) * amp
-                + sin(rel * 2 * .pi * 3.3 + phase * 1.6) * (amp * 0.35)
-                + sin(rel * 2 * .pi * 0.6 - phase * 0.55) * (amp * 0.55)
-            path.addLine(to: CGPoint(x: x, y: CGFloat(y)))
-            x += 3
-        }
-        path.addLine(to: CGPoint(x: rect.width, y: rect.height))
-        path.addLine(to: CGPoint(x: 0, y: rect.height))
-        path.closeSubpath()
-        return path
-    }
-}

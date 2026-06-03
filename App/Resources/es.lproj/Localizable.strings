@@ -454,3 +454,67 @@
 
 /* Easter egg */
 "Arr, sailor!" = "¡ARR, marinero!";
+
+/* Sonarr/Radarr download clients + navigation aids */
+"Download Clients" = "Clientes de descarga";
+"Sonarr / Radarr download clients" = "Clientes de descarga de Sonarr / Radarr";
+"Enable or disable the download clients configured inside each Sonarr and Radarr instance, and test them." = "Activa o desactiva los clientes de descarga configurados dentro de cada instancia de Sonarr y Radarr, y pruébalos.";
+"No Sonarr or Radarr" = "Sin Sonarr ni Radarr";
+"Add a Sonarr or Radarr service to manage its download clients." = "Añade un servicio Sonarr o Radarr para gestionar sus clientes de descarga.";
+"No download clients configured." = "No hay clientes de descarga configurados.";
+"Searching providers…" = "Buscando en los proveedores…";
+"Scroll-to-top button" = "Botón de ir arriba";
+"Navigation Aids" = "Ayudas de navegación";
+"Shows a floating button in the bottom-left corner of every screen that jumps back to the top." = "Muestra un botón flotante en la esquina inferior izquierda de cada pantalla que vuelve arriba del todo.";
+
+/* Tautulli / Jellystat statistics dashboards */
+"Activity" = "Actividad";
+"History" = "Historial";
+"Users" = "Usuarios";
+"Libraries" = "Bibliotecas";
+"Statistics" = "Estadísticas";
+"Terminate" = "Finalizar";
+"Terminate this stream?" = "¿Finalizar esta reproducción?";
+"Nothing is playing right now." = "No se está reproduciendo nada ahora mismo.";
+"No watch history yet." = "Aún no hay historial de reproducción.";
+"No statistics for this period." = "No hay estadísticas para este periodo.";
+"No users." = "No hay usuarios.";
+"No libraries." = "No hay bibliotecas.";
+"No user activity." = "No hay actividad de usuarios.";
+"Most Watched Movies" = "Películas más vistas";
+"Most Watched Series" = "Series más vistas";
+"Most Active Users" = "Usuarios más activos";
+"Statistic" = "Estadística";
+"Activity · History · Stats · Users · Libraries" = "Actividad · Historial · Estadísticas · Usuarios · Bibliotecas";
+"Activity · Users · Libraries · Stats" = "Actividad · Usuarios · Bibliotecas · Estadísticas";
+"%lld plays" = "%lld reproducciones";
+"%lld items" = "%lld elementos";
+"%lld seasons" = "%lld temporadas";
+"%lld episodes" = "%lld episodios";
+
+/* Indexers unification + Unraid dashboard + downloads manage */
+"Cores" = "Núcleos";
+"Uptime" = "Tiempo activo";
+"No data." = "Sin datos.";
+"Manage client" = "Gestionar cliente";
+"Type above to search this indexer for any release." = "Escribe arriba para buscar cualquier publicación en este indexador.";
+"Add a Prowlarr, Jackett or NZBHydra2 service in Settings to search and manage your indexers." = "Añade un servicio Prowlarr, Jackett o NZBHydra2 en Ajustes para buscar y gestionar tus indexadores.";
+"%@ · %lld categories" = "%@ · %lld categorías";
+"Docker — %lld/%lld running" = "Docker — %lld/%lld en ejecución";
+"Start/stop containers from this host's SSH service (Docker tab)." = "Inicia/detén contenedores desde el servicio SSH de este host (pestaña Docker).";
+"System · Array · Docker" = "Sistema · Array · Docker";
+
+/* Independent service sections + monitoring filters */
+"7 days" = "7 días";
+"30 days" = "30 días";
+"90 days" = "90 días";
+"%lld days" = "%lld días";
+"Range" = "Rango";
+"No Tautulli" = "Sin Tautulli";
+"Add a Tautulli service in Settings to see playback statistics." = "Añade un servicio Tautulli en Ajustes para ver estadísticas de reproducción.";
+"No Jellystat" = "Sin Jellystat";
+"Add a Jellystat service in Settings to see playback statistics." = "Añade un servicio Jellystat en Ajustes para ver estadísticas de reproducción.";
+"No Unraid" = "Sin Unraid";
+"Add an Unraid service in Settings to see system, array and Docker status." = "Añade un servicio Unraid en Ajustes para ver el estado del sistema, el array y Docker.";
+"No SSH services" = "Sin servicios SSH";
+"Add an SSH service in Settings for a terminal, host stats and a file browser." = "Añade un servicio SSH en Ajustes para tener terminal, estadísticas del host y explorador de archivos.";

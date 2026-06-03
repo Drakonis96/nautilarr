@@ -262,6 +262,7 @@ struct SSHDetailView: View {
             }
         }
         .navigationTitle(instance.name)
+        .appBackground(settings.background)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
