@@ -38,12 +38,18 @@ final class AppSettings: ObservableObject {
     @AppStorage("autoRefreshSeconds") var autoRefreshSeconds: Int = 5
     @AppStorage("notificationsEnabled") var notificationsEnabled: Bool = false
 
-    // Appearance — floating "scroll to top" button (bottom-left, every screen).
+    // Appearance — floating buttons (bottom-right, every screen).
     @AppStorage("showScrollToTopButton") private var scrollToTopEnabledStored: Bool = true
+    @AppStorage("showQuickNavButton") private var quickNavEnabledStored: Bool = true
     /// Whether the floating scroll-to-top button is shown app-wide.
     var scrollToTopEnabled: Bool {
         get { scrollToTopEnabledStored }
         set { objectWillChange.send(); scrollToTopEnabledStored = newValue }
+    }
+    /// Whether the floating quick-access (fan) button is shown app-wide.
+    var quickNavEnabled: Bool {
+        get { quickNavEnabledStored }
+        set { objectWillChange.send(); quickNavEnabledStored = newValue }
     }
 
     // Advanced — networking timeouts (seconds).

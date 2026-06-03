@@ -29,11 +29,35 @@ private struct CompactRootView: View {
     @EnvironmentObject private var environment: AppEnvironment
     @EnvironmentObject private var instanceStore: InstanceStore
     @State private var selection: CompactTab = .destination(.home)
+    /// Programmatic navigation path for the "More" tab, so the quick-access fan
+    /// can push an overflow section directly.
+    @State private var morePath: [AppDestination] = []
 
     /// Visible destinations, minus service-specific sections that have no
     /// configured instance (so Tautulli/SSH/etc. only appear once added).
     private var visible: [AppDestination] {
         settings.visibleTabOrder.filter { $0.isConfigured(in: instanceStore) }
+    }
+
+    /// The next sections after the bottom tab bar — surfaced by the quick-access
+    /// fan for one-tap reach.
+    private var quickDestinations: [AppDestination] {
+        let beyond = Array(visible.dropFirst(4))
+        return Array((beyond.isEmpty ? Array(visible.dropFirst(1)) : beyond).prefix(3))
+    }
+
+    /// Jump to a section from the quick-access fan (switch tab, or push it in
+    /// the More stack if it lives in the overflow).
+    private func quickNav(_ dest: AppDestination) {
+        if directTabs.contains(dest) {
+            morePath = []
+            selection = .destination(dest)
+        } else if overflow.contains(dest) {
+            morePath = [dest]
+            selection = .more
+        } else {
+            selection = .destination(.home)
+        }
     }
 
     /// iOS only shows five tab items before folding the rest into its OWN
@@ -80,19 +104,30 @@ private struct CompactRootView: View {
                 // Re-localize the whole tab (incl. nav titles and any pushed
                 // screens) the instant the language changes.
                 .id(settings.localeIdentifier)
-                .scrollToTopButton(enabled: settings.scrollToTopEnabled)
+                .floatingButtons(scrollToTop: settings.scrollToTopEnabled,
+                                 quickNav: settings.quickNavEnabled,
+                                 quickDestinations: quickDestinations,
+                                 onSelect: quickNav)
                 .tabItem { destination.navLabel }
                 .badge(destination.showsActivityBadge ? environment.activeDownloadCount : 0)
                 .tag(CompactTab.destination(destination))
             }
             if !overflow.isEmpty {
-                NavigationStack {
+                NavigationStack(path: $morePath) {
                     MoreView(destinations: overflow)
                         .appBackground(settings.background)
                         .themedBars(settings.background)
+                        .navigationDestination(for: AppDestination.self) { dest in
+                            dest.rootView
+                                .navigationTitle(LocalizedStringKey(dest.title))
+                                .appBackground(settings.background)
+                        }
                 }
                 .id(settings.localeIdentifier)
-                .scrollToTopButton(enabled: settings.scrollToTopEnabled)
+                .floatingButtons(scrollToTop: settings.scrollToTopEnabled,
+                                 quickNav: settings.quickNavEnabled,
+                                 quickDestinations: quickDestinations,
+                                 onSelect: quickNav)
                 .tabItem { Label("More", systemImage: "ellipsis.circle") }
                 .badge(overflowBadge)
                 .tag(CompactTab.more)
@@ -117,11 +152,7 @@ private struct MoreView: View {
     var body: some View {
         List {
             ForEach(destinations) { destination in
-                NavigationLink {
-                    destination.rootView
-                        .navigationTitle(LocalizedStringKey(destination.title))
-                        .appBackground(settings.background)
-                } label: {
+                NavigationLink(value: destination) {
                     destination.navLabel
                         .badge(destination.showsActivityBadge ? environment.activeDownloadCount : 0)
                 }
@@ -178,7 +209,10 @@ private struct SidebarRootView: View {
             }
             .id(settings.localeIdentifier)
             .appBackground(settings.background)
-            .scrollToTopButton(enabled: settings.scrollToTopEnabled)
+            .floatingButtons(scrollToTop: settings.scrollToTopEnabled,
+                             quickNav: settings.quickNavEnabled,
+                             quickDestinations: Array(visible.dropFirst(4).prefix(3)),
+                             onSelect: { selection = $0 })
         }
         .navigationSplitViewStyle(.balanced)
         .sheet(isPresented: $showAbout) { AboutSplashView() }

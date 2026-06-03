@@ -189,6 +189,70 @@ struct ReleaseRowGeneric: View {
     }
 }
 
+/// A secure text field with an eye button to reveal/hide what's typed — so the
+/// user can double-check a password they're entering.
+struct RevealableSecureField: View {
+    let prompt: LocalizedStringKey
+    @Binding var text: String
+    @State private var revealed = false
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Group {
+                if revealed {
+                    TextField(prompt, text: $text)
+                } else {
+                    SecureField(prompt, text: $text)
+                }
+            }
+            #if os(iOS)
+            .textInputAutocapitalization(.never)
+            #endif
+            .autocorrectionDisabled()
+            Button { revealed.toggle() } label: {
+                Image(systemName: revealed ? "eye.slash" : "eye")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(revealed ? "Hide password" : "Show password")
+        }
+    }
+}
+
+/// A sheet that prompts for a passphrase with a reveal toggle and confirm/cancel
+/// actions. Used for encrypting/decrypting configuration backups.
+struct PassphrasePromptView: View {
+    let title: LocalizedStringKey
+    let message: LocalizedStringKey
+    let confirmLabel: LocalizedStringKey
+    @Binding var passphrase: String
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    RevealableSecureField(prompt: "Password", text: $passphrase)
+                } footer: {
+                    Text(message)
+                }
+            }
+            .navigationTitle(title)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { onCancel() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(confirmLabel) { onConfirm() }
+                        .disabled(passphrase.isEmpty)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+}
+
 /// A prominent in-content search field. Used where a system `.searchable` bar
 /// would render twice — e.g. a `NavigationSplitView` detail root on Mac Catalyst,
 /// which placed one (working) bar in the toolbar and a second (dead) one in the

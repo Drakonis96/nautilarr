@@ -64,31 +64,39 @@ struct SettingsView: View {
         .fileImporter(isPresented: $isImporting, allowedContentTypes: [.data]) { result in
             handleImport(result)
         }
-        .alert("Encrypt backup", isPresented: $showExportPassphrase) {
-            SecureField("Password", text: $exportPassphrase)
-            Button("Export") {
+        .sheet(isPresented: $showExportPassphrase) {
+            PassphrasePromptView(
+                title: "Encrypt backup",
+                message: "Choose a password to encrypt this backup. It contains your API keys and passwords, so you'll need this password to import it.",
+                confirmLabel: "Export",
+                passphrase: $exportPassphrase
+            ) {
                 let pass = exportPassphrase; exportPassphrase = ""
+                showExportPassphrase = false
                 guard !pass.isEmpty, let data = instanceStore.exportConfiguration(passphrase: pass) else { return }
                 exportDocument = ConfigDocument(data: data)
                 isExporting = true
+            } onCancel: {
+                exportPassphrase = ""; showExportPassphrase = false
             }
-            Button("Cancel", role: .cancel) { exportPassphrase = "" }
-        } message: {
-            Text("Choose a password to encrypt this backup. It contains your API keys and passwords, so you'll need this password to import it.")
         }
-        .alert("Backup password", isPresented: $showImportPassphrase) {
-            SecureField("Password", text: $importPassphrase)
-            Button("Import") {
+        .sheet(isPresented: $showImportPassphrase) {
+            PassphrasePromptView(
+                title: "Backup password",
+                message: "Enter the password used when this backup was created.",
+                confirmLabel: "Import",
+                passphrase: $importPassphrase
+            ) {
                 let pass = importPassphrase; importPassphrase = ""
+                showImportPassphrase = false
                 if let data = pendingImportData {
                     do { try instanceStore.importConfiguration(data, passphrase: pass) }
                     catch { importError = error.localizedDescription }
                 }
                 pendingImportData = nil
+            } onCancel: {
+                importPassphrase = ""; pendingImportData = nil; showImportPassphrase = false
             }
-            Button("Cancel", role: .cancel) { importPassphrase = ""; pendingImportData = nil }
-        } message: {
-            Text("Enter the password used when this backup was created.")
         }
         .alert("Import failed", isPresented: .constant(importError != nil)) {
             Button("OK") { importError = nil }

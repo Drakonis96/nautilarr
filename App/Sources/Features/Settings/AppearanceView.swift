@@ -165,10 +165,16 @@ struct AppearanceView: View {
                 )) {
                     Label("Scroll-to-top button", systemImage: "arrow.up.to.line")
                 }
+                Toggle(isOn: Binding(
+                    get: { settings.quickNavEnabled },
+                    set: { settings.quickNavEnabled = $0 }
+                )) {
+                    Label("Quick-access button", systemImage: "ellipsis.circle")
+                }
             } header: {
                 Text("Navigation Aids")
             } footer: {
-                Text("Shows a floating button in the bottom-left corner of every screen that jumps back to the top.")
+                Text("Floating buttons in the bottom-right corner of every screen: a scroll-to-top arrow, and a quick-access button that fans out the next sections.")
             }
             .tintedCards()
 

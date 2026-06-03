@@ -59,33 +59,102 @@ enum ScrollToTop {
 }
 
 extension View {
-    /// Overlays a floating "scroll to top" button in the bottom-leading corner
-    /// when `enabled`. Applied at the navigation-stack level so it appears on
-    /// every screen.
-    func scrollToTopButton(enabled: Bool) -> some View {
-        modifier(ScrollToTopButtonModifier(enabled: enabled))
+    /// Overlays the bottom-right floating button stack: a "scroll to top" arrow
+    /// and a quick-access "fan" button that springs out the next few navigation
+    /// sections. Both are individually toggleable. Applied at the navigation-
+    /// stack level so they appear on every screen.
+    func floatingButtons(
+        scrollToTop: Bool,
+        quickNav: Bool,
+        quickDestinations: [AppDestination],
+        onSelect: @escaping (AppDestination) -> Void
+    ) -> some View {
+        modifier(FloatingButtonsModifier(
+            scrollToTopEnabled: scrollToTop,
+            quickNavEnabled: quickNav,
+            destinations: Array(quickDestinations.prefix(3)),
+            onSelect: onSelect
+        ))
     }
 }
 
-private struct ScrollToTopButtonModifier: ViewModifier {
-    let enabled: Bool
+private struct FloatingButtonsModifier: ViewModifier {
+    let scrollToTopEnabled: Bool
+    let quickNavEnabled: Bool
+    let destinations: [AppDestination]
+    let onSelect: (AppDestination) -> Void
+
+    @State private var expanded = false
+
+    private var showsFan: Bool { quickNavEnabled && !destinations.isEmpty }
+
+    /// Hand-tuned arc offsets (relative to the fan button) — they open up-and-
+    /// left into open water, spaced so the icons don't crowd each other, clearing
+    /// the (lifted) arrow above and the tab bar below.
+    private let arc: [CGSize] = [
+        CGSize(width: -100, height: 0),
+        CGSize(width: -89, height: -46),
+        CGSize(width: -57, height: -82)
+    ]
 
     func body(content: Content) -> some View {
         content.overlay(alignment: .bottomTrailing) {
-            if enabled {
-                Button {
-                    ScrollToTop.trigger()
-                } label: {
-                    Image(systemName: "arrow.up")
-                        .font(.headline.weight(.bold))
-                        .frame(width: 46, height: 46)
+            ZStack(alignment: .bottomTrailing) {
+                if expanded {
+                    // Invisible scrim: tap anywhere else to close the fan.
+                    Color.black.opacity(0.001)
+                        .ignoresSafeArea()
+                        .onTapGesture { withAnimation(.easeOut(duration: 0.2)) { expanded = false } }
                 }
-                .glassCircle()
-                .shadow(color: .black.opacity(0.18), radius: 6, y: 3)
+                VStack(spacing: 12) {
+                    if scrollToTopEnabled {
+                        circleButton(system: "arrow.up", label: "Scroll to top") { ScrollToTop.trigger() }
+                            // Lift the arrow while the fan is open so the top fan
+                            // icon has clear, even spacing beneath it.
+                            .offset(y: (showsFan && expanded) ? -44 : 0)
+                    }
+                    if showsFan { fan }
+                }
                 .padding(.trailing, 16)
                 .padding(.bottom, 16)
-                .accessibilityLabel("Scroll to top")
             }
         }
+    }
+
+    private var fan: some View {
+        ZStack {
+            ForEach(Array(destinations.enumerated()), id: \.element) { index, dest in
+                let offset = arc[min(index, arc.count - 1)]
+                Button {
+                    withAnimation(.easeOut(duration: 0.2)) { expanded = false }
+                    onSelect(dest)
+                } label: {
+                    Image(systemName: dest.symbol)
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(width: 44, height: 44)
+                }
+                .glassCircle()
+                .shadow(color: .black.opacity(0.18), radius: 5, y: 3)
+                .accessibilityLabel(Text(LocalizedStringKey(dest.title)))
+                .offset(x: expanded ? offset.width : 0, y: expanded ? offset.height : 0)
+                .opacity(expanded ? 1 : 0)
+                .scaleEffect(expanded ? 1 : 0.3)
+            }
+            circleButton(system: "ellipsis", label: "Quick access") {
+                withAnimation(.spring(response: 0.32, dampingFraction: 0.72)) { expanded.toggle() }
+            }
+            .rotationEffect(.degrees(expanded ? 90 : 0))
+        }
+    }
+
+    private func circleButton(system: String, label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: system)
+                .font(.headline.weight(.bold))
+                .frame(width: 46, height: 46)
+        }
+        .glassCircle()
+        .shadow(color: .black.opacity(0.18), radius: 6, y: 3)
+        .accessibilityLabel(label)
     }
 }

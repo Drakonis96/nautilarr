@@ -57,6 +57,7 @@ struct NautilarrApp: App {
 /// objects are attached to *this* view), so SwiftUI re-evaluates it the moment
 /// either value changes — appearance updates live, without a relaunch.
 private struct AppRootView: View {
+    @EnvironmentObject private var environment: AppEnvironment
     @EnvironmentObject private var settings: AppSettings
     @EnvironmentObject private var updateChecker: UpdateChecker
     @EnvironmentObject private var appLock: AppLockManager
@@ -92,6 +93,10 @@ private struct AppRootView: View {
             if phase == .background {
                 appLock.softLock()
                 if settings.faceIDOnLaunch { locked = true }
+                // Queue the next background poll so health/import/request
+                // notifications can fire while the app is closed. Without this
+                // the OS never runs the refresh task at all.
+                environment.backgroundRefresh.scheduleNextRefresh()
             } else if phase == .active && locked {
                 Task { await unlock() }
             }
@@ -111,6 +116,7 @@ private struct AppRootView: View {
             }
             .animation(.easeInOut(duration: 0.25), value: locked)
             .task { await updateChecker.checkOnLaunch() }
+            .task { environment.backgroundRefresh.scheduleNextRefresh() }
             .alert("Update available", isPresented: Binding(
                 get: { updateChecker.available != nil },
                 set: { if !$0 { updateChecker.available = nil } }
