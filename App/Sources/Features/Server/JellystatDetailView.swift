@@ -40,6 +40,9 @@ struct JellystatDetailView: View {
     @State private var isLoading = false
     @State private var timeRange = 30
     @State private var query = ""
+    /// The real error from the last activity fetch, surfaced instead of being
+    /// silently swallowed so a failing stream lookup is diagnosable.
+    @State private var activityError: String?
 
     private var client: JellystatClient? { instanceStore.jellystatClient(for: instance) }
 
@@ -118,8 +121,22 @@ struct JellystatDetailView: View {
 
     private var activityList: some View {
         List {
-            if sessions.isEmpty && !isLoading {
-                Text("Nothing is playing right now.").foregroundStyle(.secondary).tintedCards()
+            if let activityError, sessions.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label("Couldn't load sessions", systemImage: "exclamationmark.triangle")
+                        .font(.subheadline.weight(.semibold)).foregroundStyle(.orange)
+                    Text(activityError).font(.caption).foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 2)
+                .tintedCards()
+            } else if sessions.isEmpty && !isLoading {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Nothing is playing right now.").foregroundStyle(.secondary)
+                    Text("If a stream is playing but isn't shown, your Jellystat may be using the Jellyfin WebSocket (Jellyfin 10.11+). Set JF_USE_WEBSOCKETS=false on the Jellystat server to fall back to polling.")
+                        .font(.caption2).foregroundStyle(.tertiary)
+                }
+                .padding(.vertical, 2)
+                .tintedCards()
             }
             ForEach(sessions) { session in
                 VStack(alignment: .leading, spacing: 6) {
@@ -217,7 +234,13 @@ struct JellystatDetailView: View {
         defer { isLoading = false }
         switch segment {
         case .activity:
-            sessions = (try? await client.sessions()) ?? []
+            do {
+                sessions = try await client.sessions()
+                activityError = nil
+            } catch {
+                sessions = []
+                activityError = (error as? APIError)?.localizedDescription ?? error.localizedDescription
+            }
         case .users:
             users = (try? await client.users()) ?? []
         case .libraries:

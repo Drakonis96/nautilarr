@@ -18,6 +18,10 @@ final class AppEnvironment: ObservableObject {
     /// the Home and Downloads screens as they refresh.
     @Published var activeDownloadCount: Int = 0
 
+    /// Number of outstanding issues shown as a badge on the Activity tab.
+    /// Updated by the Inbox screen as it refreshes.
+    @Published var inboxIssueCount: Int = 0
+
     init() {
         let monitor = NetworkMonitor()
         monitor.start()

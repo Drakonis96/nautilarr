@@ -201,9 +201,38 @@ public struct JellystatClient: Sendable {
     }
 
     /// Currently-playing Jellyfin sessions.
+    ///
+    /// `/proxy/getSessions` is an (unauthenticated) passthrough of Jellyfin's
+    /// `GET /Sessions`; Jellystat already strips idle sessions server-side, so a
+    /// non-empty result means something is playing. We still keep the
+    /// `isPlaying` guard because older Jellystat builds didn't pre-filter, and
+    /// we decode the body tolerantly (bare array, or wrapped under
+    /// `sessions`/`data`/`Sessions`) so a version that changes the envelope
+    /// doesn't silently report "nothing playing".
     public func sessions() async throws -> [JellystatSession] {
-        let all: [JellystatSession] = try await api.send(.get("proxy/getSessions"))
+        let data = try await api.sendReturningData(.get("proxy/getSessions"))
+        let all = try Self.decodeSessions(from: data)
         return all.filter { $0.isPlaying }
+    }
+
+    /// Decodes the sessions payload, accepting either a bare JSON array or an
+    /// object that wraps the array under a common key.
+    static func decodeSessions(from data: Data) throws -> [JellystatSession] {
+        let decoder = JSONDecoder.nautilarr
+        if let array = try? decoder.decode([JellystatSession].self, from: data) {
+            return array
+        }
+        struct Wrapper: Decodable {
+            let sessions: [JellystatSession]?
+            let data: [JellystatSession]?
+            let Sessions: [JellystatSession]?
+        }
+        if let wrapper = try? decoder.decode(Wrapper.self, from: data) {
+            return wrapper.sessions ?? wrapper.data ?? wrapper.Sessions ?? []
+        }
+        // Surface the original array-decode error for diagnostics rather than
+        // pretending the result was empty.
+        return try decoder.decode([JellystatSession].self, from: data)
     }
 
     /// Per-user activity totals (`/stats/getAllUserActivity`).

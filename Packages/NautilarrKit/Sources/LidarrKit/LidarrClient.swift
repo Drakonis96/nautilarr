@@ -83,6 +83,13 @@ public struct LidarrClient: Sendable {
         try await api.send(try Endpoint.json("\(Self.base)/command", method: .post, body: command))
     }
 
+    /// Re-processes monitored downloads, re-triggering import of completed items.
+    // VERIFY: POST /api/v1/command { name: "RefreshMonitoredDownloads" }.
+    @discardableResult
+    public func refreshMonitoredDownloads() async throws -> LidarrCommandResource {
+        try await runCommand(LidarrCommandRequest(name: "RefreshMonitoredDownloads"))
+    }
+
     // MARK: Editing (monitored / quality profile / root folder)
 
     /// Bulk-edits one or more artists via the editor endpoint. Only the non-nil

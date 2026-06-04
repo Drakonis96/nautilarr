@@ -133,6 +133,14 @@ public struct SonarrClient: Sendable {
         return try await api.send(endpoint)
     }
 
+    /// Re-processes every monitored download in the queue, which re-triggers
+    /// import of completed-but-not-imported items — a safe "retry import" nudge.
+    // VERIFY: POST /api/v3/command { name: "RefreshMonitoredDownloads" }.
+    @discardableResult
+    public func refreshMonitoredDownloads() async throws -> SonarrCommandResource {
+        try await runCommand(SonarrCommandRequest(name: "RefreshMonitoredDownloads"))
+    }
+
     // MARK: - Editing (monitored / quality profile / root folder)
 
     /// Bulk-edits one or more series via the editor endpoint. Only the non-nil

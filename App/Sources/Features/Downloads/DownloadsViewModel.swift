@@ -72,6 +72,9 @@ struct UnifiedDownload: Identifiable {
     var seedingSeconds: Int?
     /// Share ratio (torrent clients only).
     var ratio: Double?
+    /// Current download rate in bytes/sec (download clients only; nil = unknown).
+    /// Powers the Activity Inbox's "stalled at 0 B/s" detection.
+    var downloadSpeed: Int? = nil
     let togglePause: (@MainActor () async -> Void)?
     let remove: (@MainActor (_ deleteData: Bool) async -> Void)?
     /// Force a re-check of the downloaded data (torrent clients only).
@@ -79,8 +82,19 @@ struct UnifiedDownload: Identifiable {
     /// *arr only: remove from the client AND add to the blocklist so the *arr
     /// re-searches for a different release. `nil` for download-client items.
     var blocklist: (@MainActor () async -> Void)? = nil
+    /// *arr only: re-process monitored downloads to re-trigger a stuck import.
+    /// `nil` for download-client items.
+    var retryImport: (@MainActor () async -> Void)? = nil
 
     var isSeeding: Bool { category == .seeding }
+
+    /// True for torrent/usenet download clients; false for *arr import queues.
+    var isDownloadClient: Bool {
+        switch serviceType {
+        case .sonarr, .radarr, .lidarr: return false
+        default: return true
+        }
+    }
 }
 
 /// Unified download queue across the *arr import queues and the download clients
@@ -128,7 +142,8 @@ final class DownloadsViewModel: ObservableObject {
                         isPaused: false, downloadClient: item.downloadClient,
                         size: item.size, errorMessage: item.errorMessage, togglePause: nil,
                         remove: { try? await client.removeQueueItem(id: item.id, removeFromClient: $0) },
-                        blocklist: { try? await client.removeQueueItem(id: item.id, removeFromClient: true, blocklist: true) }
+                        blocklist: { try? await client.removeQueueItem(id: item.id, removeFromClient: true, blocklist: true) },
+                        retryImport: { try? await client.refreshMonitoredDownloads() }
                     ))
                 }
             } catch { note(error) }
@@ -148,7 +163,8 @@ final class DownloadsViewModel: ObservableObject {
                         isPaused: false, downloadClient: item.downloadClient,
                         size: item.size, errorMessage: item.errorMessage, togglePause: nil,
                         remove: { try? await client.removeQueueItem(id: item.id, removeFromClient: $0) },
-                        blocklist: { try? await client.removeQueueItem(id: item.id, removeFromClient: true, blocklist: true) }
+                        blocklist: { try? await client.removeQueueItem(id: item.id, removeFromClient: true, blocklist: true) },
+                        retryImport: { try? await client.refreshMonitoredDownloads() }
                     ))
                 }
             } catch { note(error) }
@@ -168,7 +184,8 @@ final class DownloadsViewModel: ObservableObject {
                         isPaused: false, downloadClient: item.downloadClient,
                         size: item.size, errorMessage: item.errorMessage, togglePause: nil,
                         remove: { try? await client.removeQueueItem(id: item.id, removeFromClient: $0) },
-                        blocklist: { try? await client.removeQueueItem(id: item.id, removeFromClient: true, blocklist: true) }
+                        blocklist: { try? await client.removeQueueItem(id: item.id, removeFromClient: true, blocklist: true) },
+                        retryImport: { try? await client.refreshMonitoredDownloads() }
                     ))
                 }
             } catch { note(error) }
@@ -188,6 +205,7 @@ final class DownloadsViewModel: ObservableObject {
                         isPaused: paused, downloadClient: "qBittorrent",
                         size: t.size.map(Double.init), errorMessage: nil,
                         seedingSeconds: t.seedingTime, ratio: t.ratio,
+                        downloadSpeed: t.dlspeed.map(Int.init),
                         togglePause: {
                             if paused { try? await client.resume(hashes: [t.hash]) }
                             else { try? await client.pause(hashes: [t.hash]) }
@@ -259,6 +277,7 @@ final class DownloadsViewModel: ObservableObject {
                         isWarning: false, isError: t.hasError, isPaused: paused, downloadClient: "Transmission",
                         size: t.totalSize.map(Double.init), errorMessage: t.hasError ? t.errorString : nil,
                         seedingSeconds: t.secondsSeeding, ratio: t.uploadRatio,
+                        downloadSpeed: t.rateDownload,
                         togglePause: {
                             if paused { try? await client.start(ids: [t.id]) }
                             else { try? await client.stop(ids: [t.id]) }
@@ -283,6 +302,7 @@ final class DownloadsViewModel: ObservableObject {
                         isWarning: false, isError: t.hasError, isPaused: paused, downloadClient: "Deluge",
                         size: t.totalSize.map(Double.init), errorMessage: nil,
                         seedingSeconds: t.seedingTime, ratio: t.ratio,
+                        downloadSpeed: t.downloadPayloadRate,
                         togglePause: {
                             if paused { try? await client.resume(hashes: [t.id]) }
                             else { try? await client.pause(hashes: [t.id]) }

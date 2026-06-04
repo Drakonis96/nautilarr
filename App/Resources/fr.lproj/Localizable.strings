@@ -499,3 +499,24 @@
 "Add an Unraid service in Settings to see system, array and Docker status." = "Ajoutez un service Unraid dans les Réglages pour voir l’état du système, de la grappe et de Docker.";
 "No SSH services" = "Aucun service SSH";
 "Add an SSH service in Settings for a terminal, host stats and a file browser." = "Ajoutez un service SSH dans les Réglages pour un terminal, des statistiques d’hôte et un explorateur de fichiers.";
+
+
+/* Activity inbox + request pipeline (v0.1.4) */
+"Nothing to watch" = "Rien à surveiller";
+"Add a media or download service in Settings and the Activity inbox will flag anything that needs attention." = "Ajoutez un service multimédia ou de téléchargement dans Réglages et la boîte d’activité signalera tout ce qui nécessite votre attention.";
+"All clear" = "Tout va bien";
+"Nothing needs your attention right now." = "Rien ne nécessite votre attention pour le moment.";
+"Retry all imports" = "Réessayer tous les imports";
+"Blocklist & re-search failed" = "Blacklister et rechercher à nouveau les échecs";
+"Retry all stuck imports?" = "Réessayer tous les imports bloqués ?";
+"Blocklist and re-search every failed import?" = "Blacklister et rechercher à nouveau tous les imports échoués ?";
+"Retry imports" = "Réessayer les imports";
+"Blocklist & re-search" = "Blacklister et rechercher à nouveau";
+"Flag as stalled after" = "Marquer comme bloqué après";
+"Activity inbox" = "Boîte d’activité";
+"How long a download may report 0 B/s before the Activity inbox flags it as stalled. Failed imports and service-health warnings always appear." = "Durée pendant laquelle un téléchargement peut rester à 0 o/s avant que la boîte d’activité le signale comme bloqué. Les imports échoués et les alertes d’état des services apparaissent toujours.";
+"Pipeline" = "Suivi";
+"No requests in flight. Approved titles will appear here as they download and import." = "Aucune demande en cours. Les titres approuvés apparaîtront ici au fur et à mesure du téléchargement et de l’import.";
+"Couldn't load sessions" = "Impossible de charger les sessions";
+"Couldn't load activity" = "Impossible de charger l’activité";
+"If a stream is playing but isn't shown, your Jellystat may be using the Jellyfin WebSocket (Jellyfin 10.11+). Set JF_USE_WEBSOCKETS=false on the Jellystat server to fall back to polling." = "Si une lecture est en cours mais n’apparaît pas, votre Jellystat utilise peut-être le WebSocket de Jellyfin (Jellyfin 10.11+). Définissez JF_USE_WEBSOCKETS=false sur le serveur Jellystat pour revenir à l’interrogation.";

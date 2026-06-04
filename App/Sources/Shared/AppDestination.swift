@@ -12,6 +12,7 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
     case calendar
     case search
     case downloads
+    case inbox
     case requests
     case indexers
     case tautulli
@@ -32,6 +33,7 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         case .calendar: return "Calendar"
         case .search: return "Search"
         case .downloads: return "Downloads"
+        case .inbox: return "Activity"
         case .requests: return "Requests"
         case .indexers: return "Indexers"
         case .subtitles: return "Subtitles"
@@ -53,6 +55,7 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         case .calendar: return "calendar"
         case .search: return "magnifyingglass"
         case .downloads: return "arrow.down.circle"
+        case .inbox: return "bell.badge"
         case .requests: return "tray.and.arrow.down"
         case .indexers: return "magnifyingglass.circle"
         case .subtitles: return "captions.bubble"
@@ -128,8 +131,17 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
-    /// Whether this destination shows the active-downloads badge.
-    var showsActivityBadge: Bool { self == .downloads }
+    /// Whether this destination shows a count badge in the sidebar/tab bar.
+    var showsActivityBadge: Bool { self == .downloads || self == .inbox }
+
+    /// The badge count to show for this destination, resolved from live counts.
+    @MainActor func badgeCount(in environment: AppEnvironment) -> Int {
+        switch self {
+        case .downloads: return environment.activeDownloadCount
+        case .inbox: return environment.inboxIssueCount
+        default: return 0
+        }
+    }
 
     /// Whether the user may hide this destination from the sidebar/tab bar.
     /// Home and Settings always stay visible so the app is never stranded.

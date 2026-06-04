@@ -7,8 +7,9 @@ import OverseerrKit
 struct RequestsView: View {
     @EnvironmentObject private var instanceStore: InstanceStore
     @StateObject private var model = RequestsViewModel()
+    @StateObject private var pipeline = PipelineViewModel()
 
-    private enum Tab: Hashable { case requests, discover }
+    private enum Tab: Hashable { case requests, discover, pipeline }
     @State private var tab: Tab = .requests
     @State private var requesting: OverseerrSearchResult?
 
@@ -25,17 +26,33 @@ struct RequestsView: View {
                     Picker("", selection: $tab) {
                         Text("Requests").tag(Tab.requests)
                         Text("Discover").tag(Tab.discover)
+                        Text("Pipeline").tag(Tab.pipeline)
                     }
                     .pickerStyle(.segmented)
                     .padding([.horizontal, .top])
                     .padding(.bottom, 8)
 
-                    if tab == .requests { requestsList } else { discoverList }
+                    switch tab {
+                    case .requests: requestsList
+                    case .discover: discoverList
+                    case .pipeline: pipelineList
+                    }
                 }
             }
         }
         .overlay(alignment: .bottom) { Toast(message: model.statusMessage) { model.statusMessage = nil } }
         .task(id: model.filter) { await model.load(store: instanceStore) }
+        .task(id: tab) { if tab == .pipeline { await pipeline.load(store: instanceStore) } }
+        .navigationDestination(for: MediaEntry.self) { entry in
+            switch entry {
+            case let .series(instance, series):
+                SeriesDetailView(item: LibraryItem(instance: instance, series: series))
+            case let .movie(instance, movie):
+                MovieDetailView(instance: instance, movie: movie)
+            case let .artist(instance, artist):
+                ArtistDetailView(instance: instance, artist: artist)
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 RefreshSpinnerButton(isLoading: model.isLoading) {
@@ -114,6 +131,28 @@ struct RequestsView: View {
                 .tintedCards()
             }
         }
+    }
+
+    // MARK: Pipeline
+
+    private var pipelineList: some View {
+        List {
+            if pipeline.items.isEmpty && !pipeline.isLoading {
+                Text("No requests in flight. Approved titles will appear here as they download and import.")
+                    .foregroundStyle(.secondary).font(.subheadline)
+                    .tintedCards()
+            }
+            ForEach(pipeline.items) { item in
+                if let entry = item.mediaEntry {
+                    NavigationLink(value: entry) { PipelineRow(item: item) }
+                } else {
+                    PipelineRow(item: item)
+                }
+            }
+            .tintedCards()
+        }
+        .overlay { if pipeline.isLoading && pipeline.items.isEmpty { ProgressView() } }
+        .refreshable { await pipeline.load(store: instanceStore) }
     }
 }
 
@@ -219,5 +258,85 @@ private struct DiscoverRow: View {
         case 2: return "Pending"
         default: return "Requested"
         }
+    }
+}
+
+// MARK: - Pipeline row
+
+private struct PipelineRow: View {
+    let item: PipelineItem
+
+    private var posterURL: URL? {
+        guard let path = item.posterPath else { return nil }
+        return URL(string: "https://image.tmdb.org/t/p/w185\(path)")
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            AsyncCachedImage(url: posterURL)
+                .frame(width: 54, height: 81)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(item.title).font(.subheadline).lineLimit(2)
+                HStack(spacing: 6) {
+                    StatusBadge(text: item.mediaType.uppercased())
+                    StatusBadge(text: item.stage.label, color: stageColor)
+                    if item.stage == .downloading {
+                        Text("\(Int(item.progress * 100))%").font(.caption2).foregroundStyle(.secondary)
+                    }
+                }
+                StageTimeline(current: item.stage, progress: item.progress)
+                if let user = item.requestedBy {
+                    Text("by \(user)").font(.caption2).foregroundStyle(.secondary)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var stageColor: Color {
+        switch item.stage {
+        case .available: return .green
+        case .downloading, .importing: return Theme.teal
+        case .requested: return .orange
+        default: return .secondary
+        }
+    }
+}
+
+/// A compact horizontal stepper across the six pipeline stages: completed stages
+/// are filled, the current one is highlighted (with a thin progress bar while
+/// downloading), and upcoming stages are dimmed.
+private struct StageTimeline: View {
+    let current: PipelineStage
+    let progress: Double
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 4) {
+                ForEach(Array(PipelineStage.allCases.enumerated()), id: \.element) { index, stage in
+                    Image(systemName: stage.symbol)
+                        .font(.caption2)
+                        .foregroundStyle(color(for: stage))
+                    if index < PipelineStage.allCases.count - 1 {
+                        Rectangle()
+                            .fill(stage < current ? Theme.teal : Color.secondary.opacity(0.25))
+                            .frame(height: 2)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+            }
+            if current == .downloading {
+                ProgressView(value: progress).tint(Theme.teal)
+            }
+        }
+    }
+
+    private func color(for stage: PipelineStage) -> Color {
+        if stage < current { return Theme.teal }
+        if stage == current { return current == .available ? .green : Theme.teal }
+        return .secondary.opacity(0.35)
     }
 }

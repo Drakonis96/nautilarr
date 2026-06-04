@@ -38,6 +38,48 @@ final class JellystatClientTests: XCTestCase {
         XCTAssertEqual(sessions[1].displayTitle, "Example Movie")
     }
 
+    /// A real Jellyfin `/Sessions` element (passed through by Jellystat) carries
+    /// many extra PascalCase fields; decoding must survive them and detect play.
+    func testSessionsDecodeRealWorldJellyfinShape() async throws {
+        let client = makeClient { _ in
+            let json = #"""
+            [{
+              "PlayState":{"PositionTicks":7200000000,"CanSeek":true,"IsPaused":false,
+                "IsMuted":false,"MediaSourceId":"a1b2","PlayMethod":"DirectPlay","RepeatMode":"RepeatNone"},
+              "RemoteEndPoint":"192.168.1.42","Id":"8f3c","UserId":"2b1a","UserName":"alice",
+              "Client":"Jellyfin iOS","ApplicationVersion":"1.3.0","DeviceName":"Alice's iPhone",
+              "DeviceId":"ABCD","LastActivityDate":"2026-06-04T18:22:31.0000000Z",
+              "NowPlayingItem":{"Name":"Chapter 5","SeriesName":"Some Show","SeriesId":"1111",
+                "Id":"9999","Type":"Episode","RunTimeTicks":18000000000,"Container":"mkv",
+                "MediaStreams":[{"Type":"Video","Codec":"h264","DisplayTitle":"1080p H264"}],
+                "ProviderIds":{"Tvdb":"123456"}}
+            }]
+            """#
+            return (200, json.data(using: .utf8)!)
+        }
+        let sessions = try await client.sessions()
+        XCTAssertEqual(sessions.count, 1)
+        let s = try XCTUnwrap(sessions.first)
+        XCTAssertEqual(s.displayTitle, "Some Show — Chapter 5")
+        XCTAssertEqual(s.userName, "alice")
+        XCTAssertFalse(s.isPaused)
+        XCTAssertEqual(s.progress, 0.4, accuracy: 0.001)  // 7.2e9 / 1.8e10
+    }
+
+    /// Defensive: if a Jellystat build wraps the array (e.g. `{"sessions":[...]}`)
+    /// instead of returning a bare array, we still find the playing session
+    /// rather than silently reporting "nothing playing".
+    func testSessionsDecodeWrappedEnvelope() async throws {
+        let client = makeClient { _ in
+            let json = #"{"sessions":[{"Id":"s1","UserName":"bob","NowPlayingItem":{"Name":"Movie","Type":"Movie","RunTimeTicks":72000000000},"PlayState":{"PositionTicks":36000000000,"IsPaused":false}}]}"#
+            return (200, json.data(using: .utf8)!)
+        }
+        let sessions = try await client.sessions()
+        XCTAssertEqual(sessions.count, 1)
+        XCTAssertEqual(sessions.first?.displayTitle, "Movie")
+        XCTAssertEqual(sessions.first?.progress ?? 0, 0.5, accuracy: 0.001)
+    }
+
     func testReachableHitsGetLibraries() async throws {
         var path: String?
         let client = makeClient { request in

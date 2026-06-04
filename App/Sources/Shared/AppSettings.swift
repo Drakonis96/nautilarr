@@ -15,8 +15,9 @@ final class AppSettings: ObservableObject {
     /// Current default-tab-order version. Bump when the built-in order changes so
     /// existing installs adopt it once (their custom reorder is reset that once).
     /// v3 placed the Plex/Jellyfin shortcuts after Home; v4 adds the independent
-    /// Tautulli/Jellystat/Unraid/SSH sections before Server.
-    private static let currentTabOrderVersion = 4
+    /// Tautulli/Jellystat/Unraid/SSH sections before Server; v5 adds the Activity
+    /// inbox after Downloads.
+    private static let currentTabOrderVersion = 5
 
     init() {
         // One-time migration: adopt the new built-in section order (Subtitles
@@ -66,6 +67,15 @@ final class AppSettings: ObservableObject {
     @AppStorage("seedLimitAction") private var seedLimitActionRaw: String = SeedLimitAction.pause.rawValue
     // Downloads — individually disabled download clients (by instance id).
     @AppStorage("disabledClients") private var disabledClientsRaw: String = ""
+    // Activity inbox — minutes a download may sit at 0 B/s before it's flagged stuck.
+    @AppStorage("inboxStallMinutes") private var inboxStallMinutesStored: Int = 30
+
+    /// How long (minutes) a download must report 0 B/s before the Activity inbox
+    /// flags it as stalled.
+    var inboxStallMinutes: Int {
+        get { inboxStallMinutesStored }
+        set { objectWillChange.send(); inboxStallMinutesStored = min(240, max(5, newValue)) }
+    }
 
     var seedLimitEnabled: Bool {
         get { seedLimitEnabledStored }

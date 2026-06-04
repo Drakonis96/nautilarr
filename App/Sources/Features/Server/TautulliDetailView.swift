@@ -41,6 +41,9 @@ struct TautulliDetailView: View {
     @State private var isLoading = false
     @State private var status: String?
     @State private var terminateTarget: TautulliSession?
+    /// The real error from the last activity fetch, surfaced instead of being
+    /// silently swallowed so a failing stream lookup is diagnosable.
+    @State private var activityError: String?
     // Filters
     @State private var timeRange = 30          // Stats window in days
     @State private var query = ""              // History/Users text filter
@@ -148,7 +151,15 @@ struct TautulliDetailView: View {
 
     private var activityList: some View {
         List {
-            if sessions.isEmpty && !isLoading {
+            if let activityError, sessions.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label("Couldn't load activity", systemImage: "exclamationmark.triangle")
+                        .font(.subheadline.weight(.semibold)).foregroundStyle(.orange)
+                    Text(activityError).font(.caption).foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 2)
+                .tintedCards()
+            } else if sessions.isEmpty && !isLoading {
                 Text("Nothing is playing right now.").foregroundStyle(.secondary).tintedCards()
             }
             ForEach(sessions) { session in
@@ -297,7 +308,13 @@ struct TautulliDetailView: View {
         defer { isLoading = false }
         switch segment {
         case .activity:
-            sessions = ((try? await client.activity())?.sessions) ?? []
+            do {
+                sessions = try await client.activity().sessions
+                activityError = nil
+            } catch {
+                sessions = []
+                activityError = (error as? APIError)?.localizedDescription ?? error.localizedDescription
+            }
         case .history:
             history = ((try? await client.history(length: 50))?.data) ?? []
         case .stats:

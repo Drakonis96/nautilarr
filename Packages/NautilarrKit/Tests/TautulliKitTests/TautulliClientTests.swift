@@ -37,6 +37,53 @@ final class TautulliClientTests: XCTestCase {
         XCTAssertEqual(activity.sessions.first?.user, "alice")
     }
 
+    /// The real Tautulli `get_activity` payload carries ~150 fields per session
+    /// and `stream_count` is a quoted string. Decoding must survive the full
+    /// shape and still detect the playing session.
+    func testActivityDecodesRealWorldShape() async throws {
+        let client = makeClient { _ in
+            let json = #"""
+            {"response":{"result":"success","message":null,"data":{
+              "lan_bandwidth":25318,"stream_count":"1","stream_count_transcode":0,
+              "total_bandwidth":25318,"wan_bandwidth":0,
+              "sessions":[{
+                "session_key":"27","session_id":"helf15l3rxgw01xxe0jf3l3d",
+                "user":"LordCommanderSnow","user_id":133788,"username":"LordCommanderSnow",
+                "friendly_name":"Jon Snow","full_title":"Game of Thrones - The Red Woman",
+                "title":"The Red Woman","grandparent_title":"Game of Thrones",
+                "parent_title":"Season 6","media_type":"episode","state":"playing",
+                "player":"Castle-PC","platform":"Plex Media Player","device":"Windows",
+                "progress_percent":"42","transcode_decision":"transcode",
+                "bandwidth":"25318","rating_key":"153037","ip_address":"10.10.10.1","location":"lan"
+              }]
+            }}}
+            """#
+            return (200, json.data(using: .utf8)!)
+        }
+        let activity = try await client.activity()
+        XCTAssertEqual(activity.count, 1)
+        XCTAssertEqual(activity.sessions.count, 1)
+        let s = try XCTUnwrap(activity.sessions.first)
+        XCTAssertEqual(s.displayTitle, "Game of Thrones - The Red Woman")
+        XCTAssertEqual(s.user, "LordCommanderSnow")
+        XCTAssertEqual(s.player, "Castle-PC")
+        XCTAssertEqual(s.state, "playing")
+        XCTAssertEqual(s.progress, 0.42, accuracy: 0.001)
+        XCTAssertTrue(s.isTranscoding)
+    }
+
+    /// Some Tautulli versions emit `stream_count` as a JSON number rather than a
+    /// quoted string; the lenient decoder must still report the right count.
+    func testActivityNumericStreamCount() async throws {
+        let client = makeClient { _ in
+            let json = #"{"response":{"result":"success","data":{"stream_count":2,"sessions":[{"session_key":"1","full_title":"A","state":"playing","progress_percent":"10"},{"session_key":"2","full_title":"B","state":"playing","progress_percent":"20"}]}}}"#
+            return (200, json.data(using: .utf8)!)
+        }
+        let activity = try await client.activity()
+        XCTAssertEqual(activity.count, 2)
+        XCTAssertEqual(activity.sessions.count, 2)
+    }
+
     func testErrorResultIsSurfaced() async {
         let client = makeClient { _ in
             (200, #"{"response":{"result":"error","message":"Invalid apikey","data":null}}"#.data(using: .utf8)!)

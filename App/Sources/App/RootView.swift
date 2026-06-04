@@ -79,7 +79,7 @@ private struct CompactRootView: View {
     }
 
     private var overflowBadge: Int {
-        overflow.contains(where: \.showsActivityBadge) ? environment.activeDownloadCount : 0
+        overflow.reduce(0) { $0 + $1.badgeCount(in: environment) }
     }
 
     /// Whether the current selection still maps to a visible tab.
@@ -109,7 +109,7 @@ private struct CompactRootView: View {
                                  quickDestinations: quickDestinations,
                                  onSelect: quickNav)
                 .tabItem { destination.navLabel }
-                .badge(destination.showsActivityBadge ? environment.activeDownloadCount : 0)
+                .badge(destination.badgeCount(in: environment))
                 .tag(CompactTab.destination(destination))
             }
             if !overflow.isEmpty {
@@ -154,7 +154,7 @@ private struct MoreView: View {
             ForEach(destinations) { destination in
                 NavigationLink(value: destination) {
                     destination.navLabel
-                        .badge(destination.showsActivityBadge ? environment.activeDownloadCount : 0)
+                        .badge(destination.badgeCount(in: environment))
                 }
             }
             .tintedCards()
@@ -184,7 +184,7 @@ private struct SidebarRootView: View {
                     ForEach(visible) { destination in
                         NavigationLink(value: destination) {
                             destination.navLabel
-                                .badge(destination.showsActivityBadge ? environment.activeDownloadCount : 0)
+                                .badge(destination.badgeCount(in: environment))
                         }
                     }
                 } header: {
@@ -260,6 +260,7 @@ extension AppDestination {
         case .calendar: CalendarView()
         case .search: GlobalSearchView()
         case .downloads: DownloadsView()
+        case .inbox: InboxView()
         case .requests: RequestsView()
         case .indexers: IndexersView()
         case .subtitles: SubtitlesView()

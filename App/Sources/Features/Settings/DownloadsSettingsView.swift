@@ -56,6 +56,20 @@ struct DownloadsSettingsView: View {
             }
 
             Section {
+                Stepper(value: Binding(
+                    get: { settings.inboxStallMinutes },
+                    set: { settings.inboxStallMinutes = $0 }
+                ), in: 5...240, step: 5) {
+                    LabeledContent("Flag as stalled after", value: "\(settings.inboxStallMinutes) min")
+                }
+            } header: {
+                Text("Activity inbox")
+            } footer: {
+                Text("How long a download may report 0 B/s before the Activity inbox flags it as stalled. Failed imports and service-health warnings always appear.")
+            }
+            .tintedCards()
+
+            Section {
                 Toggle("Limit seeding", isOn: Binding(
                     get: { settings.seedLimitEnabled },
                     set: { settings.seedLimitEnabled = $0 }

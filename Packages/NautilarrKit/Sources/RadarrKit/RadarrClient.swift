@@ -81,6 +81,13 @@ public struct RadarrClient: Sendable {
         try await api.send(try Endpoint.json("\(Self.base)/command", method: .post, body: command))
     }
 
+    /// Re-processes monitored downloads, re-triggering import of completed items.
+    // VERIFY: POST /api/v3/command { name: "RefreshMonitoredDownloads" }.
+    @discardableResult
+    public func refreshMonitoredDownloads() async throws -> RadarrCommandResource {
+        try await runCommand(RadarrCommandRequest(name: "RefreshMonitoredDownloads"))
+    }
+
     // MARK: Editing (monitored / quality profile / root folder)
 
     /// Bulk-edits one or more movies via the editor endpoint. Only the non-nil
