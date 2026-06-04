@@ -56,7 +56,6 @@ struct DownloadsView: View {
         }
         .overlay { if model.isLoading && model.items.isEmpty { ProgressView() } }
         .overlay(alignment: .bottom) { Toast(message: model.seedLimitStatus) { model.seedLimitStatus = nil } }
-        .refreshable { await reload() }
         .task(id: settings.autoRefreshSeconds) { await autoRefreshLoop() }
         .toolbar {
             if model.hasServices { globalActions }
@@ -181,6 +180,10 @@ struct DownloadsView: View {
                 }
                 .tintedCards()
             }
+            // Scope pull-to-refresh to the queue list only. Applying it higher up
+            // makes the horizontal filter ScrollViews refreshable too, so a
+            // vertical drag on the filter chips triggers — and jams — the refresh.
+            .refreshable { await reload() }
         }
     }
 
