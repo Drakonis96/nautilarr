@@ -85,6 +85,13 @@ struct UnifiedDownload: Identifiable {
     /// *arr only: re-process monitored downloads to re-trigger a stuck import.
     /// `nil` for download-client items.
     var retryImport: (@MainActor () async -> Void)? = nil
+    /// *arr only: the owning instance, used to deep-link the item's interactive
+    /// search from the queue. `nil` for download-client items.
+    var instanceID: UUID? = nil
+    /// Radarr-only movie id, for the interactive-search deep-link.
+    var movieId: Int? = nil
+    /// Sonarr-only episode id, for the interactive-search deep-link.
+    var episodeId: Int? = nil
 
     var isSeeding: Bool { category == .seeding }
 
@@ -94,6 +101,15 @@ struct UnifiedDownload: Identifiable {
         case .sonarr, .radarr, .lidarr: return false
         default: return true
         }
+    }
+
+    /// Whether this item flags an import that needs the user's attention
+    /// (finished downloading but stuck/failed in the *arr import step).
+    var isStuckImport: Bool { !isDownloadClient && (isWarning || isError) }
+
+    /// Whether the queue can deep-link to this item's interactive search.
+    var supportsInteractiveSearch: Bool {
+        (serviceType == .sonarr && episodeId != nil) || (serviceType == .radarr && movieId != nil)
     }
 }
 
@@ -143,7 +159,8 @@ final class DownloadsViewModel: ObservableObject {
                         size: item.size, errorMessage: item.errorMessage, togglePause: nil,
                         remove: { try? await client.removeQueueItem(id: item.id, removeFromClient: $0) },
                         blocklist: { try? await client.removeQueueItem(id: item.id, removeFromClient: true, blocklist: true) },
-                        retryImport: { try? await client.refreshMonitoredDownloads() }
+                        retryImport: { try? await client.refreshMonitoredDownloads() },
+                        instanceID: instance.id, episodeId: item.episodeId
                     ))
                 }
             } catch { note(error) }
@@ -164,7 +181,8 @@ final class DownloadsViewModel: ObservableObject {
                         size: item.size, errorMessage: item.errorMessage, togglePause: nil,
                         remove: { try? await client.removeQueueItem(id: item.id, removeFromClient: $0) },
                         blocklist: { try? await client.removeQueueItem(id: item.id, removeFromClient: true, blocklist: true) },
-                        retryImport: { try? await client.refreshMonitoredDownloads() }
+                        retryImport: { try? await client.refreshMonitoredDownloads() },
+                        instanceID: instance.id, movieId: item.movieId
                     ))
                 }
             } catch { note(error) }

@@ -1,5 +1,8 @@
 import SwiftUI
 import Combine
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// User-facing appearance and behaviour preferences. Persisted in
 /// `UserDefaults` (no secrets). Observable so the UI updates live.
@@ -168,6 +171,31 @@ final class AppSettings: ObservableObject {
     var background: BackgroundPalette {
         get { BackgroundPalette(rawValue: backgroundRaw) ?? .system }
         set { objectWillChange.send(); backgroundRaw = newValue.rawValue }
+    }
+
+    // App icon — the user can pick the icon background. `Automatic` follows the
+    // system appearance (Ocean/blue in light, Midnight/black in dark) via the
+    // primary AppIcon's dark-appearance variant; the other two force one icon.
+    @AppStorage("appIconStyle") private var appIconStyleRaw = AppIconStyle.system.rawValue
+    var appIconStyle: AppIconStyle {
+        get { AppIconStyle(rawValue: appIconStyleRaw) ?? .system }
+        set {
+            objectWillChange.send()
+            appIconStyleRaw = newValue.rawValue
+            applyAppIcon(newValue)
+        }
+    }
+
+    /// Applies the chosen icon via `setAlternateIconName` (no-op if unsupported or
+    /// already current). `nil` resets to the primary AppIcon (the auto one).
+    func applyAppIcon(_ style: AppIconStyle) {
+        #if canImport(UIKit)
+        let app = UIApplication.shared
+        guard app.supportsAlternateIcons else { return }
+        let target = style.alternateName
+        guard app.alternateIconName != target else { return }
+        app.setAlternateIconName(target) { _ in }
+        #endif
     }
 
     // App language override ("" = follow the system language). Applied on next
@@ -355,6 +383,50 @@ enum AppTextSize: String, CaseIterable, Identifiable {
         case .large: return .xLarge
         case .larger: return .xxLarge
         case .largest: return .xxxLarge
+        }
+    }
+}
+
+/// The app icon background the user can pick. `Automatic` follows the system
+/// appearance (Ocean in light, Midnight in dark) via the primary AppIcon's
+/// dark-appearance variant; `ocean`/`midnight` force one icon via an alternate.
+enum AppIconStyle: String, CaseIterable, Identifiable {
+    case system
+    case ocean
+    case midnight
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .system: return "Automatic"
+        case .ocean: return "Ocean"
+        case .midnight: return "Midnight"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .system: return "Follows light/dark — blue by day, black by night"
+        case .ocean: return "Always the blue ocean background"
+        case .midnight: return "Always the black background"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .system: return "circle.lefthalf.filled"
+        case .ocean: return "water.waves"
+        case .midnight: return "moon.stars.fill"
+        }
+    }
+
+    /// The alternate-icon name for `setAlternateIconName` (nil = primary AppIcon).
+    var alternateName: String? {
+        switch self {
+        case .system: return nil
+        case .ocean: return "AppIcon-Ocean"
+        case .midnight: return "AppIcon-Midnight"
         }
     }
 }

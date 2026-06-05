@@ -55,6 +55,39 @@ public struct OverseerrClient: Sendable {
         return try await api.send(.get("\(Self.base)/\(path)/\(tmdbId)"))
     }
 
+    /// Recommended titles for a movie or TV show (TMDB-sourced via Overseerr).
+    /// `mediaType` is `movie` or `tv`. The recommendation results omit their own
+    /// `mediaType`, so it's stamped from the parent for correct routing.
+    // VERIFY: GET /api/v1/{movie|tv}/{tmdbId}/recommendations.
+    public func recommendations(mediaType: String, tmdbId: Int, page: Int = 1) async throws -> [OverseerrSearchResult] {
+        let path = mediaType == "tv" ? "tv" : "movie"
+        let result: OverseerrSearchPage = try await api.send(.get(
+            "\(Self.base)/\(path)/\(tmdbId)/recommendations",
+            query: [URLQueryItem(name: "page", value: String(page))]
+        ))
+        return result.results.map { r in
+            var r = r
+            if (r.mediaType ?? "").isEmpty { r.mediaType = mediaType }
+            return r
+        }
+    }
+
+    /// Similar titles for a movie or TV show. Same shape as recommendations; used
+    /// as a fallback when the recommendations list is empty.
+    // VERIFY: GET /api/v1/{movie|tv}/{tmdbId}/similar.
+    public func similar(mediaType: String, tmdbId: Int, page: Int = 1) async throws -> [OverseerrSearchResult] {
+        let path = mediaType == "tv" ? "tv" : "movie"
+        let result: OverseerrSearchPage = try await api.send(.get(
+            "\(Self.base)/\(path)/\(tmdbId)/similar",
+            query: [URLQueryItem(name: "page", value: String(page))]
+        ))
+        return result.results.map { r in
+            var r = r
+            if (r.mediaType ?? "").isEmpty { r.mediaType = mediaType }
+            return r
+        }
+    }
+
     // MARK: Discover / create requests
 
     /// Multi-search for titles to request. Drops `person` results.

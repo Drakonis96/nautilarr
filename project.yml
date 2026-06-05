@@ -13,8 +13,8 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "0.1.4"
-    CURRENT_PROJECT_VERSION: "5"
+    MARKETING_VERSION: "0.1.5"
+    CURRENT_PROJECT_VERSION: "6"
     SWIFT_VERSION: "5.9"
     DEVELOPMENT_TEAM: ""
     CODE_SIGN_STYLE: Automatic
@@ -113,6 +113,11 @@ targets:
         PRODUCT_NAME: Nautilarr
         INFOPLIST_KEY_UILaunchScreen_Generation: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Alternate app icons the user can switch to in-app (setAlternateIconName).
+        # The primary AppIcon also carries a dark-appearance variant for automatic
+        # system light/dark switching.
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: AppIcon-Ocean AppIcon-Midnight
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         TARGETED_DEVICE_FAMILY: "1,2"
         # Mac Catalyst — reuse the iPad codebase on macOS.

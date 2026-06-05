@@ -11,6 +11,8 @@ struct SeriesDetailView: View {
     @StateObject private var model: SeriesDetailViewModel
     @State private var showDeleteConfirm = false
     @State private var editing: MediaEntry?
+    /// Drives the pushed season-pack interactive search section.
+    @State private var seasonSearch: SeasonSearchTarget?
 
     init(item: LibraryItem) {
         self.item = item
@@ -33,9 +35,9 @@ struct SeriesDetailView: View {
                 .tintedCards()
 
             if hasCastSource {
-                Section { MediaCastStrip(mediaType: "tv", tmdbId: series.tmdbId, title: series.title, year: series.year) }
-                    .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
-                    .listRowBackground(Color.clear)
+                MediaCastStrip(mediaType: "tv", tmdbId: series.tmdbId, title: series.title, year: series.year)
+                MediaRecommendationsStrip(mediaType: "tv", tmdbId: series.tmdbId,
+                                          title: series.title, year: series.year) { model.statusMessage = $0 }
             }
 
             actionsSection
@@ -60,6 +62,12 @@ struct SeriesDetailView: View {
             }
         }
         .sheet(item: $editing) { entry in LibraryItemEditView(entry: entry) }
+        .navigationDestination(item: $seasonSearch) { target in
+            InteractiveReleaseSearchView(
+                title: target.seasonNumber == 0 ? "Specials" : "Season \(target.seasonNumber)",
+                load: model.seasonSearchLoader(seriesId: target.seriesId, seasonNumber: target.seasonNumber)
+            )
+        }
         .confirmationDialog("Delete \(item.series.title)?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("Remove from library", role: .destructive) { Task { await model.delete(deleteFiles: false) } }
             Button("Remove and delete files", role: .destructive) { Task { await model.delete(deleteFiles: true) } }
@@ -135,7 +143,7 @@ struct SeriesDetailView: View {
             Section {
                 ForEach(model.episodesBySeason[season] ?? []) { episode in
                     NavigationLink {
-                        ReleasesView(episode: episode, model: model)
+                        EpisodeDetailView(episode: episode, model: model)
                     } label: {
                         EpisodeRow(episode: episode)
                     }
@@ -151,7 +159,7 @@ struct SeriesDetailView: View {
                     }
                 }
             } header: {
-                HStack {
+                HStack(spacing: 14) {
                     Button {
                         Task { await model.setSeasonMonitored(season, monitored: !model.isSeasonMonitored(season)) }
                     } label: {
@@ -161,9 +169,20 @@ struct SeriesDetailView: View {
                     .buttonStyle(.borderless)
                     Text(season == 0 ? "Specials" : "Season \(season)")
                     Spacer()
-                    Button("Search") { Task { await model.searchSeason(season) } }
-                        .font(.caption)
-                        .buttonStyle(.borderless)
+                    // Automatic (indexer) search for the whole season.
+                    Button { Task { await model.searchSeason(season) } } label: {
+                        Image(systemName: "magnifyingglass")
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Automatic search season \(season)")
+                    // Interactive search for a season pack (pushed section).
+                    Button {
+                        seasonSearch = SeasonSearchTarget(seriesId: item.series.id, seasonNumber: season)
+                    } label: {
+                        Image(systemName: "list.bullet.rectangle")
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Interactive search season \(season)")
                 }
             }
         }
@@ -184,6 +203,13 @@ struct SeriesDetailView: View {
                 }
         }
     }
+}
+
+/// Identifies a season whose interactive (pack) search is being pushed.
+struct SeasonSearchTarget: Identifiable, Hashable {
+    let seriesId: Int
+    let seasonNumber: Int
+    var id: Int { seasonNumber }
 }
 
 private struct EpisodeRow: View {

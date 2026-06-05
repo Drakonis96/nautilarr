@@ -47,10 +47,67 @@ final class BackgroundRefreshManager {
     func performRefresh() async -> Bool {
         var budget = maxPerRun
         await pollHealth(budget: &budget)
+        await pollStuckImports(budget: &budget)
         await pollSonarrHistory(budget: &budget)
         await pollPendingRequests(budget: &budget)
         await pollStreams(budget: &budget)
         return true
+    }
+
+    // MARK: - Stuck imports (Sonarr/Radarr/Lidarr download queue)
+
+    /// Notifies when an *arr finished downloading something but couldn't import it
+    /// automatically (it's sitting in the queue flagged `warning`/`error`). These
+    /// are the "waiting to import" items the user has to reprocess by hand.
+    private func pollStuckImports(budget: inout Int) async {
+        var seen = stringSet(forKey: "notify.stuckImports")
+        var active = Set<String>()
+
+        func consider(_ instanceName: String, _ items: [(id: Int, title: String, stuck: Bool)]) async {
+            for item in items where item.stuck {
+                let key = "\(instanceName)|\(item.id)"
+                active.insert(key)
+                guard !seen.contains(key), budget > 0 else { continue }
+                seen.insert(key); budget -= 1
+                await notifications.post(
+                    event: .stuckImport,
+                    title: "\(instanceName): import needs attention",
+                    body: "\(item.title) finished downloading but couldn't be imported automatically."
+                )
+            }
+        }
+
+        for instance in instanceStore.instances(ofType: .sonarr) {
+            guard let client = instanceStore.sonarrClient(for: instance) else { continue }
+            guard let queue = try? await client.queue(pageSize: 100) else { continue }
+            await consider(instance.name, queue.records.map {
+                (id: $0.id, title: $0.title ?? "Episode", stuck: Self.isStuck($0.trackedDownloadStatus))
+            })
+        }
+        for instance in instanceStore.instances(ofType: .radarr) {
+            guard let client = instanceStore.radarrClient(for: instance) else { continue }
+            guard let queue = try? await client.queue(pageSize: 100) else { continue }
+            await consider(instance.name, queue.records.map {
+                (id: $0.id, title: $0.title ?? "Movie", stuck: Self.isStuck($0.trackedDownloadStatus))
+            })
+        }
+        for instance in instanceStore.instances(ofType: .lidarr) {
+            guard let client = instanceStore.lidarrClient(for: instance) else { continue }
+            guard let queue = try? await client.queue(pageSize: 100) else { continue }
+            await consider(instance.name, queue.records.map {
+                (id: $0.id, title: $0.title ?? "Album", stuck: Self.isStuck($0.trackedDownloadStatus))
+            })
+        }
+        // Keep only items still stuck, so a resolved-then-restuck import re-notifies.
+        setStringSet(Array(seen.intersection(active)), forKey: "notify.stuckImports")
+    }
+
+    /// Whether a `trackedDownloadStatus` indicates a stuck/failed import.
+    private static func isStuck(_ status: String?) -> Bool {
+        switch status?.lowercased() {
+        case "warning", "error": return true
+        default: return false
+        }
     }
 
     // MARK: - Health warnings

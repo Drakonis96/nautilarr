@@ -21,18 +21,35 @@ against each service's public REST API.
 
 ## ✨ Screenshots
 
+### 📱 iPhone / iPad
+
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/01-home.png" alt="Home dashboard" /><br/><sub><b>Dashboard</b> — per-service stat cards, upcoming releases, health & active downloads</sub></td>
-    <td width="50%"><img src="docs/screenshots/02-library.png" alt="Library" /><br/><sub><b>Library</b> — unified poster grid with Series / Movies filters and search</sub></td>
+    <td width="33%"><img src="docs/screenshots/ios/01-home.png" alt="Home dashboard" /><br/><sub><b>Dashboard</b> — per-service stat cards, library stats & upcoming releases</sub></td>
+    <td width="33%"><img src="docs/screenshots/ios/02-library.png" alt="Library" /><br/><sub><b>Library</b> — unified poster grid with Series / Movies filters, search & size slider</sub></td>
+    <td width="33%"><img src="docs/screenshots/ios/03-detail.png" alt="Title detail" /><br/><sub><b>Detail</b> — cinematic header with ratings, genres, cast & Seerr recommendations</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/screenshots/03-downloads.png" alt="Downloads" /><br/><sub><b>Downloads</b> — per-service tabs, status filters, inline controls & seed stats</sub></td>
-    <td width="50%"><img src="docs/screenshots/04-request.png" alt="Request options" /><br/><sub><b>Unified requests</b> — pick server, quality profile & root folder, just like the source</sub></td>
+    <td width="33%"><img src="docs/screenshots/ios/04-calendar.png" alt="Calendar" /><br/><sub><b>Calendar</b> — day-grouped release timeline with downloaded / missing / upcoming pills</sub></td>
+    <td width="33%"><img src="docs/screenshots/ios/05-settings.png" alt="Settings" /><br/><sub><b>Settings</b> — services, appearance, notifications, config import/export & more</sub></td>
+    <td width="33%"><img src="docs/screenshots/ios/06-security.png" alt="Security" /><br/><sub><b>Security</b> — optional master-password encryption & Face ID / Touch ID gates</sub></td>
+  </tr>
+</table>
+
+### 🖥️ Mac
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/macos/01-home.png" alt="Home dashboard" /><br/><sub><b>Dashboard</b> — per-service stat cards, upcoming releases, health & active downloads</sub></td>
+    <td width="50%"><img src="docs/screenshots/macos/02-library.png" alt="Library" /><br/><sub><b>Library</b> — unified poster grid with Series / Movies filters and search</sub></td>
   </tr>
   <tr>
-    <td width="50%"><img src="docs/screenshots/05-about.png" alt="About splash" /><br/><sub><b>About</b> — the Nautilarr sub sailing past the services it can connect</sub></td>
-    <td width="50%"><img src="docs/screenshots/06-appearance.png" alt="Appearance" /><br/><sub><b>Theming</b> — accent colours, pastel backgrounds, text size & navigation</sub></td>
+    <td width="50%"><img src="docs/screenshots/macos/03-downloads.png" alt="Downloads" /><br/><sub><b>Downloads</b> — per-service tabs, status filters, inline controls & seed stats</sub></td>
+    <td width="50%"><img src="docs/screenshots/macos/04-request.png" alt="Request options" /><br/><sub><b>Unified requests</b> — pick server, quality profile & root folder, just like the source</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/macos/05-about.png" alt="About splash" /><br/><sub><b>About</b> — the Nautilarr sub sailing past the services it can connect</sub></td>
+    <td width="50%"><img src="docs/screenshots/macos/06-appearance.png" alt="Appearance" /><br/><sub><b>Theming</b> — accent colours, pastel backgrounds, text size & navigation</sub></td>
   </tr>
 </table>
 

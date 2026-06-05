@@ -8,6 +8,7 @@ import Combine
 enum NotificationEvent: String, CaseIterable, Identifiable, Codable {
     case grabbed
     case imported
+    case stuckImport
     case healthWarning
     case pendingRequest
     case newStream
@@ -17,6 +18,7 @@ enum NotificationEvent: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .grabbed: return "Release grabbed"
         case .imported: return "Download imported"
+        case .stuckImport: return "Import needs attention"
         case .healthWarning: return "Health warning"
         case .pendingRequest: return "Pending request"
         case .newStream: return "New stream"

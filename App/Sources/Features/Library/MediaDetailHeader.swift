@@ -243,7 +243,12 @@ enum MediaColor {
 // MARK: - Cast
 
 /// Horizontal cast strip, sourced from Overseerr/Jellyseerr (TMDB credits) when a
-/// requests service is configured. Renders nothing if unavailable.
+/// requests service is configured. Rendered as a standard grouped `Section` so it
+/// matches the Overview/Details "globos" exactly (same `.tintedCards()` styling),
+/// rather than a separate glass card. Renders nothing if unavailable.
+///
+/// Placed *directly* inside the detail `List` (not wrapped in another `Section`),
+/// because its body is itself the cast `Section`.
 struct MediaCastStrip: View {
     let mediaType: String   // "movie" | "tv"
     let tmdbId: Int?
@@ -251,41 +256,47 @@ struct MediaCastStrip: View {
     let year: Int?
     @EnvironmentObject private var instanceStore: InstanceStore
     @State private var cast: [OverseerrCastMember] = []
-    @State private var loaded = false
+    /// `true` once the fetch has finished (so the loading row stays put for the
+    /// whole request — a stable host that never tears down the in-flight task).
+    @State private var didLoad = false
+    /// One-shot guard so the fetch fires exactly once.
+    @State private var didStart = false
 
     private var hasOverseerr: Bool { !instanceStore.instances(ofType: .overseerr).isEmpty }
 
     var body: some View {
-        // The `.task` is hosted on this stable VStack — NOT on `content` — so the
-        // in-flight Overseerr fetch isn't cancelled when `content` swaps from the
-        // loading row to the cast card (which would otherwise abort the request).
-        VStack(spacing: 0) { content }
-            .task { if hasOverseerr { await loadIfNeeded() } }
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        if !cast.isEmpty {
-            CardContainer(title: "Cast", systemImage: "person.2.fill") {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(alignment: .top, spacing: 14) {
-                        ForEach(cast.prefix(20)) { CastCard(member: $0) }
+        // The `.task` is hosted on this stable `Group` — so the in-flight
+        // Overseerr fetch isn't cancelled as the inner Section swaps from the
+        // loading row to the cast cards.
+        Group {
+            if !cast.isEmpty {
+                Section("Cast") {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(alignment: .top, spacing: 14) {
+                            ForEach(cast.prefix(20)) { CastCard(member: $0) }
+                        }
+                        .padding(.vertical, 2)
                     }
-                    .padding(.horizontal, 2)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 0))
                 }
+                .tintedCards()
+            } else if hasOverseerr && !didLoad {
+                Section("Cast") {
+                    HStack(spacing: 8) {
+                        ProgressView().controlSize(.small)
+                        Text("Loading cast…").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                .tintedCards()
             }
-        } else if hasOverseerr && !loaded {
-            HStack(spacing: 8) {
-                ProgressView().controlSize(.small)
-                Text("Loading cast…").font(.caption).foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .task { if hasOverseerr { await loadIfNeeded() } }
     }
 
     private func loadIfNeeded() async {
-        guard !loaded else { return }
-        loaded = true
+        guard !didStart else { return }
+        didStart = true
+        defer { didLoad = true }
         guard let instance = instanceStore.instances(ofType: .overseerr).first,
               let client = instanceStore.overseerrClient(for: instance) else { return }
         // Prefer the real TMDB id (Radarr movies and most Sonarr series expose it).
@@ -325,5 +336,112 @@ private struct CastCard: View {
             }
         }
         .frame(width: 86)
+    }
+}
+
+// MARK: - Recommendations
+
+/// Horizontal "Recommended" strip from Overseerr/Jellyseerr, based on the current
+/// title. Tapping a poster opens the request dialog so the user can add it.
+/// Emits its own grouped `Section` so it matches the other detail cards.
+/// Renders nothing if no requests service is configured or nothing is suggested.
+struct MediaRecommendationsStrip: View {
+    let mediaType: String   // "movie" | "tv"
+    let tmdbId: Int?
+    let title: String
+    let year: Int?
+    /// Surfaces a status message (e.g. "Requested …") to the host detail view.
+    var onStatus: (String) -> Void = { _ in }
+
+    @EnvironmentObject private var instanceStore: InstanceStore
+    @State private var items: [OverseerrSearchResult] = []
+    @State private var didLoad = false
+    @State private var didStart = false
+    @State private var requesting: RequestTarget?
+
+    private var overseerrInstance: ServiceInstance? { instanceStore.instances(ofType: .overseerr).first }
+    private var hasOverseerr: Bool { overseerrInstance != nil }
+
+    private struct RequestTarget: Identifiable {
+        let result: OverseerrSearchResult
+        var id: Int { result.id }
+    }
+
+    var body: some View {
+        Group {
+            if !items.isEmpty {
+                Section("Recommended") {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(alignment: .top, spacing: 12) {
+                            ForEach(items) { item in
+                                Button { requesting = RequestTarget(result: item) } label: {
+                                    RecommendationCard(result: item)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.vertical, 2)
+                    }
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 0))
+                }
+                .tintedCards()
+            } else if hasOverseerr && !didLoad {
+                Section("Recommended") {
+                    HStack(spacing: 8) {
+                        ProgressView().controlSize(.small)
+                        Text("Loading recommendations…").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                .tintedCards()
+            }
+        }
+        .task { if hasOverseerr { await loadIfNeeded() } }
+        .sheet(item: $requesting) { target in
+            if let instance = overseerrInstance {
+                RequestOptionsView(instance: instance, result: target.result) { onStatus($0) }
+            }
+        }
+    }
+
+    private func loadIfNeeded() async {
+        guard !didStart else { return }
+        didStart = true
+        defer { didLoad = true }
+        guard let instance = overseerrInstance,
+              let client = instanceStore.overseerrClient(for: instance) else { return }
+        var id: Int? = (tmdbId ?? 0) > 0 ? tmdbId : nil
+        if id == nil, let year {
+            if let results = try? await client.search(query: title) {
+                let want = mediaType == "tv" ? "tv" : "movie"
+                id = results.first { $0.mediaType == want && $0.year == String(year) }?.id
+            }
+        }
+        guard let id else { return }
+        var recs = (try? await client.recommendations(mediaType: mediaType, tmdbId: id)) ?? []
+        if recs.isEmpty { recs = (try? await client.similar(mediaType: mediaType, tmdbId: id)) ?? [] }
+        items = recs.filter { ($0.mediaType == "movie" || $0.mediaType == "tv") && $0.posterPath != nil }
+    }
+}
+
+private struct RecommendationCard: View {
+    let result: OverseerrSearchResult
+
+    private var url: URL? {
+        guard let path = result.posterPath else { return nil }
+        return URL(string: "https://image.tmdb.org/t/p/w185\(path)")
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            AsyncCachedImage(url: url)
+                .frame(width: 92, height: 138)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.white.opacity(0.12)))
+            Text(result.displayTitle).font(.caption2.weight(.semibold)).lineLimit(1)
+            if let year = result.year {
+                Text(year).font(.caption2).foregroundStyle(.secondary)
+            }
+        }
+        .frame(width: 92)
     }
 }

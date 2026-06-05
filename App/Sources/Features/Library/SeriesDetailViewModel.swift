@@ -148,18 +148,30 @@ final class SeriesDetailViewModel: ObservableObject {
         }
     }
 
-    func releases(for episode: SonarrEpisode) async -> [SonarrRelease] {
-        guard let client else { return [] }
-        return (try? await client.releases(episodeId: episode.id)) ?? []
+    /// Interactive-search loader for a single episode. Surfaces failures (the
+    /// shared results view shows the real error) instead of swallowing them — the
+    /// previous `try?` made every failure read as "No releases found", which is
+    /// why series/episode search appeared broken while movies worked.
+    func episodeSearchLoader(_ episode: SonarrEpisode) -> () async throws -> [InteractiveRelease] {
+        guard let client else { return { throw APIError.invalidResponse } }
+        return InteractiveSearchLoader.sonarrEpisode(client, episodeId: episode.id)
     }
 
-    func grab(_ release: SonarrRelease) async -> String {
-        guard let client else { return "No client" }
+    /// Interactive-search loader for a whole-season pack.
+    func seasonSearchLoader(seriesId: Int, seasonNumber: Int) -> () async throws -> [InteractiveRelease] {
+        guard let client else { return { throw APIError.invalidResponse } }
+        return InteractiveSearchLoader.sonarrSeason(client, seriesId: seriesId, seasonNumber: seasonNumber)
+    }
+
+    /// Automatic (indexer) search for a single episode. Returns a status string
+    /// for the caller's toast.
+    func automaticSearchEpisode(_ episode: SonarrEpisode) async -> String {
+        guard let client else { return "No service" }
         do {
-            try await client.grab(release)
-            return "Sent to download client."
+            _ = try await client.runCommand(.episodeSearch(episodeIds: [episode.id]))
+            return "Searching for this episode…"
         } catch {
-            return (error as? APIError)?.localizedDescription ?? error.localizedDescription
+            return describe(error)
         }
     }
 }

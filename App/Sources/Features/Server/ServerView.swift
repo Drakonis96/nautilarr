@@ -41,7 +41,7 @@ struct ServerView: View {
                                 Text(instance.type.category).font(.caption).foregroundStyle(.secondary)
                             }
                             Spacer()
-                            StatusBadge(text: "Phase \(instance.type.phase.rawValue)")
+                            StatusBadge(text: instance.type.displayName, color: Theme.teal)
                         }
                     }
                 }

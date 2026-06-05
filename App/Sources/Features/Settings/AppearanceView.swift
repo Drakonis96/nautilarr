@@ -65,6 +65,32 @@ struct AppearanceView: View {
             .tintedCards()
 
             Section {
+                ForEach(AppIconStyle.allCases) { style in
+                    Button {
+                        settings.appIconStyle = style
+                    } label: {
+                        HStack(spacing: 12) {
+                            iconThumb(style)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(style.label).foregroundStyle(.primary)
+                                Text(style.detail).font(.caption2).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if settings.appIconStyle == style {
+                                Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor)
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            } header: {
+                Text("App Icon")
+            } footer: {
+                Text("Choose the app icon background. Automatic follows the system — the blue ocean look in light mode and a black background in dark mode.")
+            }
+            .tintedCards()
+
+            Section {
                 Picker("App Language", selection: Binding(
                     get: { settings.appLanguage },
                     set: { settings.appLanguage = $0 }
@@ -216,6 +242,33 @@ struct AppearanceView: View {
 
     private func swatchFill(_ palette: BackgroundPalette) -> Color {
         palette.pastel ?? Color(uiColor: .secondarySystemBackground)
+    }
+
+    /// A small rounded app-icon preview: the submarine logo on the style's
+    /// background. `Automatic` shows a split blue/black to convey "follows system".
+    @ViewBuilder
+    private func iconThumb(_ style: AppIconStyle) -> some View {
+        let ocean = LinearGradient(
+            colors: [Color(red: 0.80, green: 0.92, blue: 0.97), Color(red: 0.09, green: 0.64, blue: 0.78)],
+            startPoint: .top, endPoint: .bottom)
+        let midnight = Color(red: 0.04, green: 0.05, blue: 0.07)
+        ZStack {
+            switch style {
+            case .ocean:
+                RoundedRectangle(cornerRadius: 10, style: .continuous).fill(ocean)
+            case .midnight:
+                RoundedRectangle(cornerRadius: 10, style: .continuous).fill(midnight)
+            case .system:
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(LinearGradient(stops: [
+                        .init(color: Color(red: 0.09, green: 0.64, blue: 0.78), location: 0.5),
+                        .init(color: midnight, location: 0.5)
+                    ], startPoint: .leading, endPoint: .trailing))
+            }
+            Image("AppLogo").resizable().scaledToFit().padding(7)
+        }
+        .frame(width: 46, height: 46)
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color.hairline))
     }
 
     private func placementBadge(inTabBar: Bool) -> some View {

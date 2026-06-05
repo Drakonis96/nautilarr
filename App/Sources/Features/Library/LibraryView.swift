@@ -13,6 +13,11 @@ struct LibraryView: View {
     @State private var statusMessage: String?
     @State private var selectionMode = false
     @State private var selection: Set<String> = []
+    /// The entry whose detail is currently pushed. Driving navigation through a
+    /// single binding (rather than a per-cell `NavigationLink(value:)`) avoids the
+    /// LazyVGrid bug where the link pushes the detail and then immediately pops
+    /// back to the grid, forcing the user to tap "back" to reach the detail.
+    @State private var openedEntry: MediaEntry?
     @AppStorage("libraryListMode") private var listMode = false
     /// Stored poster column count. Clamped per platform: iPhone keeps the view
     /// clean (1–3), iPad/Mac allow denser grids (4–8). 0 = use the default.
@@ -66,7 +71,7 @@ struct LibraryView: View {
                 }
             }
         }
-        .navigationDestination(for: MediaEntry.self) { entry in
+        .navigationDestination(item: $openedEntry) { entry in
             switch entry {
             case let .series(instance, series):
                 SeriesDetailView(item: LibraryItem(instance: instance, series: series))
@@ -132,7 +137,7 @@ struct LibraryView: View {
             }
             .buttonStyle(.plain)
         } else {
-            NavigationLink(value: entry) { label }
+            Button { openedEntry = entry } label: { label }
                 .buttonStyle(.plain)
                 .contextMenu { contextMenu(for: entry) }
         }

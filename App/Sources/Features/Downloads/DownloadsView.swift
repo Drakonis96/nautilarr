@@ -37,6 +37,8 @@ struct DownloadsView: View {
     @State private var sourceFilter: String?            // nil = all services
     @State private var statusFilter: DownloadStatusCategory?
     @State private var sort: DownloadSort = .progress
+    /// Drives the pushed interactive-search section for a stuck *arr item.
+    @State private var interactiveTarget: InteractiveSearchTarget?
 
     var body: some View {
         Group {
@@ -50,9 +52,13 @@ struct DownloadsView: View {
                 VStack(spacing: 0) {
                     serviceTabs
                     statusBar
+                    stuckBanner
                     queueList
                 }
             }
+        }
+        .navigationDestination(item: $interactiveTarget) { target in
+            InteractiveReleaseSearchView(title: target.title, load: interactiveLoader(target))
         }
         .overlay { if model.isLoading && model.items.isEmpty { ProgressView() } }
         .overlay(alignment: .bottom) { Toast(message: model.seedLimitStatus) { model.seedLimitStatus = nil } }
@@ -93,6 +99,71 @@ struct DownloadsView: View {
             }
             Button("Cancel", role: .cancel) { pendingRemoval = nil }
         }
+    }
+
+    // MARK: Stuck imports (Sonarr/Radarr waiting to import)
+
+    /// *arr queue items that finished downloading but are stuck/failed in import.
+    private var stuckImports: [UnifiedDownload] { model.items.filter(\.isStuckImport) }
+
+    @ViewBuilder
+    private var stuckBanner: some View {
+        if !stuckImports.isEmpty {
+            HStack(spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(stuckImports.count) waiting to import")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Finished downloading, but couldn't be imported automatically.")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 8)
+                Button("Retry all") { Task { await retryAllImports() } }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+        }
+    }
+
+    /// Re-processes monitored downloads on each affected instance once.
+    private func retryAllImports() async {
+        var done = Set<String>()
+        for item in stuckImports {
+            guard let retry = item.retryImport else { continue }
+            if done.insert(item.instanceName).inserted { await retry() }
+        }
+        await reload()
+    }
+
+    /// Builds the interactive-search loader for a stuck item's deep-link.
+    private func interactiveLoader(_ target: InteractiveSearchTarget) -> () async throws -> [InteractiveRelease] {
+        let instance = instanceStore.instancesInActiveNetwork.first { $0.id == target.instanceID }
+        switch target.serviceType {
+        case .sonarr:
+            if let instance, let client = instanceStore.sonarrClient(for: instance), let episodeId = target.episodeId {
+                return InteractiveSearchLoader.sonarrEpisode(client, episodeId: episodeId)
+            }
+        case .radarr:
+            if let instance, let client = instanceStore.radarrClient(for: instance), let movieId = target.movieId {
+                return InteractiveSearchLoader.radarrMovie(client, movieId: movieId)
+            }
+        default: break
+        }
+        return { throw APIError.invalidResponse }
+    }
+
+    /// Opens the interactive search for a queue item, if it can be deep-linked.
+    private func openInteractiveSearch(_ download: UnifiedDownload) {
+        guard download.supportsInteractiveSearch, let instanceID = download.instanceID else { return }
+        interactiveTarget = InteractiveSearchTarget(
+            id: download.id, serviceType: download.serviceType, instanceID: instanceID,
+            title: download.title, movieId: download.movieId, episodeId: download.episodeId)
     }
 
     // MARK: Service tabs
@@ -158,7 +229,9 @@ struct DownloadsView: View {
         } else {
             List {
                 ForEach(items) { download in
-                    DownloadRow(download: download, reload: reload) { pendingRemoval = download }
+                    DownloadRow(download: download, reload: reload,
+                                onRemove: { pendingRemoval = download },
+                                onInteractiveSearch: { openInteractiveSearch(download) })
                         .swipeActions(edge: .trailing) {
                             if download.remove != nil {
                                 Button(role: .destructive) { pendingRemoval = download } label: {
@@ -317,6 +390,7 @@ private struct DownloadRow: View {
     let download: UnifiedDownload
     let reload: () async -> Void
     let onRemove: () -> Void
+    var onInteractiveSearch: () -> Void = {}
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -344,9 +418,51 @@ private struct DownloadRow: View {
             if let error = download.errorMessage, !error.isEmpty {
                 Text(error).font(.caption2).foregroundStyle(.orange).lineLimit(2)
             }
+            if download.isStuckImport { importActions }
             Text(download.instanceName).font(.caption2).foregroundStyle(.tertiary)
         }
         .padding(.vertical, 4)
+    }
+
+    /// Reprocess actions for an *arr item stuck waiting to import: open its
+    /// interactive search, retry the import, or blocklist & search again.
+    @ViewBuilder
+    private var importActions: some View {
+        HStack(spacing: 8) {
+            if download.supportsInteractiveSearch {
+                actionChip("Search", systemImage: "list.bullet.rectangle", tint: Theme.teal) {
+                    onInteractiveSearch()
+                }
+            }
+            if download.retryImport != nil {
+                asyncActionChip("Retry import", systemImage: "arrow.clockwise", tint: .blue) {
+                    await download.retryImport?()
+                }
+            }
+            if download.blocklist != nil {
+                asyncActionChip("Re-search", systemImage: "arrow.triangle.2.circlepath", tint: .orange) {
+                    await download.blocklist?()
+                }
+            }
+        }
+        .padding(.top, 2)
+    }
+
+    private func actionChip(_ title: String, systemImage: String, tint: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.caption2.weight(.semibold))
+                .padding(.horizontal, 8).padding(.vertical, 5)
+                .background(tint.opacity(0.18), in: Capsule())
+                .foregroundStyle(tint)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func asyncActionChip(_ title: String, systemImage: String, tint: Color, action: @escaping () async -> Void) -> some View {
+        actionChip(title, systemImage: systemImage, tint: tint) {
+            Task { await action(); await reload() }
+        }
     }
 
     /// Inline icon controls: play/pause, recheck and remove.
@@ -391,4 +507,17 @@ private struct DownloadRow: View {
         .buttonStyle(.plain)
         .help(help)
     }
+}
+
+// MARK: - Interactive-search deep-link target
+
+/// Identifies a stuck *arr queue item whose interactive search is being pushed
+/// from the Downloads queue.
+struct InteractiveSearchTarget: Identifiable, Hashable {
+    let id: String
+    let serviceType: ServiceType
+    let instanceID: UUID
+    let title: String
+    var movieId: Int? = nil
+    var episodeId: Int? = nil
 }

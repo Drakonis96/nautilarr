@@ -6,8 +6,6 @@ import RadarrKit
 final class MovieDetailViewModel: ObservableObject {
     @Published var statusMessage: String?
     @Published var didDelete = false
-    @Published var releases: [RadarrRelease] = []
-    @Published var isSearching = false
     @Published var monitored: Bool
 
     private let instance: ServiceInstance
@@ -52,18 +50,11 @@ final class MovieDetailViewModel: ObservableObject {
         catch { statusMessage = describe(error) }
     }
 
-    func loadReleases() async {
-        guard let client else { return }
-        isSearching = true
-        defer { isSearching = false }
-        releases = ((try? await client.releases(movieId: movie.id)) ?? [])
-            .sorted { ($0.seeders ?? 0) > ($1.seeders ?? 0) }
-    }
-
-    func grab(_ release: RadarrRelease) async {
-        guard let client else { return }
-        do { try await client.grab(release); statusMessage = "Sent to download client." }
-        catch { statusMessage = describe(error) }
+    /// Interactive-search loader for this movie (surfaces failures in the shared
+    /// results view, which fixes the "always empty" illusion from a silent `try?`).
+    func searchLoader() -> () async throws -> [InteractiveRelease] {
+        guard let client else { return { throw APIError.invalidResponse } }
+        return InteractiveSearchLoader.radarrMovie(client, movieId: movie.id)
     }
 
     private func describe(_ error: Error) -> String {
@@ -80,7 +71,6 @@ struct MovieDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var model: MovieDetailViewModel
     @State private var showDeleteConfirm = false
-    @State private var showReleases = false
     @State private var editing: MediaEntry?
 
     init(instance: ServiceInstance, movie: RadarrMovie) {
@@ -110,12 +100,14 @@ struct MovieDetailView: View {
                     .tintedCards()
             }
 
-            // Cast only when a requests service (Overseerr/Jellyseerr) is set up —
-            // otherwise the section is always empty and just leaves a gap.
+            // Cast + recommendations only when a requests service
+            // (Overseerr/Jellyseerr) is set up — otherwise they'd always be empty
+            // and just leave a gap. Each strip emits its own grouped `Section`,
+            // matching the other cards.
             if hasCastSource {
-                Section { MediaCastStrip(mediaType: "movie", tmdbId: movie.tmdbId, title: movie.title, year: movie.year) }
-                    .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
-                    .listRowBackground(Color.clear)
+                MediaCastStrip(mediaType: "movie", tmdbId: movie.tmdbId, title: movie.title, year: movie.year)
+                MediaRecommendationsStrip(mediaType: "movie", tmdbId: movie.tmdbId,
+                                          title: movie.title, year: movie.year) { model.statusMessage = $0 }
             }
 
             Section {
@@ -129,7 +121,13 @@ struct MovieDetailView: View {
                 Button { Task { await model.automaticSearch() } } label: {
                     Label("Automatic Search", systemImage: "magnifyingglass")
                 }
-                Button { showReleases = true } label: {
+                NavigationLink {
+                    InteractiveReleaseSearchView(
+                        title: "Releases",
+                        currentFile: currentFileMeta,
+                        load: model.searchLoader()
+                    )
+                } label: {
                     Label("Interactive Search", systemImage: "list.bullet.rectangle")
                 }
                 Button { Task { await model.refresh() } } label: {
@@ -146,9 +144,6 @@ struct MovieDetailView: View {
         .onReceive(model.$didDelete) { if $0 { dismiss() } }
         .overlay(alignment: .bottom) { Toast(message: model.statusMessage) { model.statusMessage = nil } }
         .sheet(item: $editing) { entry in LibraryItemEditView(entry: entry) }
-        .sheet(isPresented: $showReleases) {
-            NavigationStack { MovieReleasesView(model: model) }
-        }
         .confirmationDialog("Delete \(movie.title)?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("Remove from library", role: .destructive) { Task { await model.delete(deleteFiles: false) } }
             Button("Remove and delete files", role: .destructive) { Task { await model.delete(deleteFiles: true) } }
@@ -173,6 +168,13 @@ struct MovieDetailView: View {
             size: f.size ?? movie.sizeOnDisk,
             runtime: f.mediaInfo?.runTime
         )
+    }
+
+    /// The linked file's metadata, shown atop interactive search when downloaded.
+    private var currentFileMeta: FileMetadata? {
+        guard movie.hasFile == true, let file = movie.movieFile,
+              let m = movieFileMeta(file), m.hasAny else { return nil }
+        return m
     }
 
     private var statusText: String? {
@@ -227,88 +229,3 @@ struct MovieDetailView: View {
     }
 }
 
-private struct MovieReleasesView: View {
-    @ObservedObject var model: MovieDetailViewModel
-    @Environment(\.dismiss) private var dismiss
-
-    @State private var sort: ReleaseSort = .seeders
-    @State private var hideRejected = false
-    @State private var indexerFilter: String?
-    @State private var qualityFilter: String?
-
-    private var indexers: [String] { Array(Set(model.releases.compactMap(\.indexer))).sorted() }
-    private var qualities: [String] { Array(Set(model.releases.compactMap { $0.quality?.displayName })).sorted() }
-
-    private var displayed: [RadarrRelease] {
-        var r = model.releases
-        if hideRejected { r = r.filter { $0.rejected != true } }
-        if let indexerFilter { r = r.filter { $0.indexer == indexerFilter } }
-        if let qualityFilter { r = r.filter { $0.quality?.displayName == qualityFilter } }
-        switch sort {
-        case .seeders: return r.sorted { ($0.seeders ?? 0) > ($1.seeders ?? 0) }
-        case .leechers: return r.sorted { ($0.leechers ?? 0) > ($1.leechers ?? 0) }
-        case .size: return r.sorted { ($0.size ?? 0) > ($1.size ?? 0) }
-        case .quality: return r.sorted { ($0.quality?.quality?.resolution ?? 0) > ($1.quality?.quality?.resolution ?? 0) }
-        case .title: return r.sorted { ($0.title ?? "") < ($1.title ?? "") }
-        }
-    }
-
-    var body: some View {
-        List {
-            Section {
-                if model.isSearching {
-                    HStack { Spacer(); ProgressView(); Spacer() }
-                } else if displayed.isEmpty {
-                    Text(model.releases.isEmpty ? "No releases found." : "No releases match the filters.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(displayed) { release in
-                        ReleaseRowGeneric(
-                            title: release.title ?? "Unknown release",
-                            quality: release.quality?.displayName,
-                            indexer: release.indexer,
-                            rejected: release.rejected == true,
-                            size: release.size,
-                            seeders: release.seeders,
-                            leechers: release.leechers
-                        ) { Task { await model.grab(release) } }
-                    }
-                }
-            } header: {
-                if !model.releases.isEmpty { Text("\(displayed.count) releases") }
-            }
-            .tintedCards()
-        }
-        .navigationTitle("Releases")
-        .toolbar {
-            if !model.releases.isEmpty { ToolbarItem(placement: .topBarLeading) { filterMenu } }
-        }
-        .doneToolbar { dismiss() }
-        .task { await model.loadReleases() }
-    }
-
-    private var filterMenu: some View {
-        Menu {
-            Picker("Sort", selection: $sort) {
-                ForEach(ReleaseSort.allCases) { Text($0.label).tag($0) }
-            }
-            Section("Filter") {
-                Toggle("Hide rejected", isOn: $hideRejected)
-                if indexers.count > 1 {
-                    Picker("Indexer", selection: $indexerFilter) {
-                        Text("All Indexers").tag(String?.none)
-                        ForEach(indexers, id: \.self) { Text($0).tag(String?.some($0)) }
-                    }
-                }
-                if qualities.count > 1 {
-                    Picker("Quality", selection: $qualityFilter) {
-                        Text("All Qualities").tag(String?.none)
-                        ForEach(qualities, id: \.self) { Text($0).tag(String?.some($0)) }
-                    }
-                }
-            }
-        } label: {
-            Label("Filter & Sort", systemImage: "line.3.horizontal.decrease.circle").labelStyle(.iconOnly)
-        }
-    }
-}

@@ -45,6 +45,16 @@ enum MediaEntry: Identifiable, Hashable, Sendable {
     case movie(instance: ServiceInstance, movie: RadarrMovie)
     case artist(instance: ServiceInstance, artist: LidarrArtist)
 
+    // Identity is the stable `id` (instance + media id), NOT the full decoded
+    // model. Without this, the synthesized conformance compares every field of
+    // the underlying SonarrSeries/RadarrMovie, so a background library reload that
+    // changes any field (size on disk, episode counts, download progress…) makes
+    // the value pushed onto the navigation stack no longer compare equal — and
+    // SwiftUI then pops the just-opened detail back to the catalogue. Comparing by
+    // `id` keeps an open detail anchored across reloads.
+    static func == (lhs: MediaEntry, rhs: MediaEntry) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
+
     var instance: ServiceInstance {
         switch self {
         case let .series(instance, _): return instance
