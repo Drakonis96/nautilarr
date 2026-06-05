@@ -22,7 +22,6 @@ xcodebuild \
   -sdk iphoneos \
   -archivePath "${ARCHIVE}" \
   archive \
-  SWIFT_ENABLE_EXPLICIT_MODULES=NO \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGN_IDENTITY="" \
