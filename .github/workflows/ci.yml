@@ -58,13 +58,22 @@ jobs:
         run: brew install xcodegen
       - name: Generate Xcode project
         run: xcodegen generate
+      # SWIFT_ENABLE_EXPLICIT_MODULES=NO must be passed on the xcodebuild command
+      # line (not just in project.yml): a project-level build setting does NOT
+      # cascade into SwiftPM dependency targets, so swift-nio-ssh was still built
+      # with explicit modules and failed with "Unable to find module dependency:
+      # 'NIO'" (its umbrella `import NIO`). A command-line override applies to
+      # every target in the build graph, including package checkouts, which is the
+      # only place that reliably reaches swift-nio-ssh.
       - name: Build (Mac Catalyst)
         run: |
           xcodebuild -project Nautilarr.xcodeproj -scheme Nautilarr \
             -destination 'platform=macOS,variant=Mac Catalyst' \
+            SWIFT_ENABLE_EXPLICIT_MODULES=NO \
             CODE_SIGNING_ALLOWED=NO build
       - name: Build (iOS Simulator)
         run: |
           xcodebuild -project Nautilarr.xcodeproj -scheme Nautilarr \
             -destination 'generic/platform=iOS Simulator' \
+            SWIFT_ENABLE_EXPLICIT_MODULES=NO \
             CODE_SIGNING_ALLOWED=NO build

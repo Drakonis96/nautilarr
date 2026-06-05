@@ -19,6 +19,7 @@ xcodebuild \
   -destination 'platform=macOS,variant=Mac Catalyst' \
   -derivedDataPath "${BUILD_DIR}" \
   build \
+  SWIFT_ENABLE_EXPLICIT_MODULES=NO \
   CODE_SIGN_IDENTITY="-" \
   CODE_SIGNING_ALLOWED=YES \
   CODE_SIGNING_REQUIRED=NO
