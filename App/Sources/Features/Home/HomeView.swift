@@ -412,15 +412,19 @@ private struct CompactServiceCard: View {
                 Spacer(minLength: 0)
                 Circle().fill(stat.errorMessage == nil ? .green : .red).frame(width: 7, height: 7)
             }
+            // Reserve space for two lines unconditionally so a headline that
+            // wraps (e.g. "80 Containers") doesn't make its card taller than the
+            // single-line cards beside it — every card in the grid stays uniform.
             Text(stat.headline)
                 .font(.callout.weight(.bold))
-                .lineLimit(2)
+                .lineLimit(2, reservesSpace: true)
                 .minimumScaleFactor(0.6)
                 .fixedSize(horizontal: false, vertical: true)
             Text(stat.instanceName)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
+            Spacer(minLength: 0)
         }
         .padding(10)
         .frame(maxWidth: .infinity, minHeight: 96, alignment: .topLeading)

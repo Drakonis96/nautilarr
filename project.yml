@@ -13,8 +13,8 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "0.1.7"
-    CURRENT_PROJECT_VERSION: "8"
+    MARKETING_VERSION: "0.1.8"
+    CURRENT_PROJECT_VERSION: "9"
     SWIFT_VERSION: "5.9"
     # Build with implicitly-built modules. Xcode 26's default (explicitly-built
     # modules) turns swift-nio-ssh's umbrella `import NIO` from a warning into a
