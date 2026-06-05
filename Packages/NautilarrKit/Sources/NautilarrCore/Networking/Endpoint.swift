@@ -9,23 +9,30 @@ public struct Endpoint: Sendable {
     public var queryItems: [URLQueryItem]
     public var body: Data?
     public var additionalHeaders: [String: String]
+    /// Per-request timeout override, in seconds. `nil` uses the client's default.
+    /// Set this for endpoints that block server-side for far longer than a normal
+    /// request — e.g. *arr interactive release search, which queries every
+    /// configured indexer synchronously and routinely takes a minute or more.
+    public var timeout: TimeInterval?
 
     public init(
         path: String,
         method: HTTPMethod = .get,
         queryItems: [URLQueryItem] = [],
         body: Data? = nil,
-        additionalHeaders: [String: String] = [:]
+        additionalHeaders: [String: String] = [:],
+        timeout: TimeInterval? = nil
     ) {
         self.path = path
         self.method = method
         self.queryItems = queryItems
         self.body = body
         self.additionalHeaders = additionalHeaders
+        self.timeout = timeout
     }
 
-    public static func get(_ path: String, query: [URLQueryItem] = []) -> Endpoint {
-        Endpoint(path: path, method: .get, queryItems: query)
+    public static func get(_ path: String, query: [URLQueryItem] = [], timeout: TimeInterval? = nil) -> Endpoint {
+        Endpoint(path: path, method: .get, queryItems: query, timeout: timeout)
     }
 
     /// Builds an `application/x-www-form-urlencoded` POST (used by APIs like

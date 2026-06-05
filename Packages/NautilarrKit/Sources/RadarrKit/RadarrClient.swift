@@ -64,8 +64,13 @@ public struct RadarrClient: Sendable {
     }
 
     // MARK: Interactive search
+    /// Radarr queries every configured indexer synchronously before responding,
+    /// so this uses the extended timeout — otherwise a movie with several indexers
+    /// times out and the UI wrongly reads "No releases found".
     public func releases(movieId: Int) async throws -> [RadarrRelease] {
-        try await api.send(.get("\(Self.base)/release", query: [URLQueryItem(name: "movieId", value: String(movieId))]))
+        try await api.send(.get("\(Self.base)/release",
+                                query: [URLQueryItem(name: "movieId", value: String(movieId))],
+                                timeout: APIClient.interactiveSearchTimeout))
     }
     public func grab(_ release: RadarrRelease) async throws {
         guard let guid = release.guid, let indexerId = release.indexerId else { throw APIError.invalidResponse }

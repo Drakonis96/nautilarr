@@ -39,6 +39,12 @@ struct DownloadsView: View {
     @State private var sort: DownloadSort = .progress
     /// Drives the pushed interactive-search section for a stuck *arr item.
     @State private var interactiveTarget: InteractiveSearchTarget?
+    /// One transient confirmation banner for every queue action (retry, re-search,
+    /// pause, recheck, remove, seed-limit) so a tap always shows it took effect.
+    @State private var toast: String?
+    /// Tracks the banner-wide "Retry all" so it can show a spinner and lock out
+    /// re-taps while the imports are being re-processed.
+    @State private var isRetryingAll = false
 
     var body: some View {
         Group {
@@ -61,7 +67,7 @@ struct DownloadsView: View {
             InteractiveReleaseSearchView(title: target.title, load: interactiveLoader(target))
         }
         .overlay { if model.isLoading && model.items.isEmpty { ProgressView() } }
-        .overlay(alignment: .bottom) { Toast(message: model.seedLimitStatus) { model.seedLimitStatus = nil } }
+        .overlay(alignment: .bottom) { Toast(message: toast) { toast = nil } }
         .task(id: settings.autoRefreshSeconds) { await autoRefreshLoop() }
         .toolbar {
             if model.hasServices { globalActions }
@@ -83,16 +89,16 @@ struct DownloadsView: View {
         .confirmationDialog("Remove from queue?", isPresented: .constant(pendingRemoval != nil), titleVisibility: .visible) {
             if let pendingRemoval {
                 Button("Remove from queue only") {
-                    Task { await pendingRemoval.remove?(false); await reload() }
+                    Task { await pendingRemoval.remove?(false); await reload(); present("Removed from queue.") }
                     self.pendingRemoval = nil
                 }
                 Button("Remove and delete from disk", role: .destructive) {
-                    Task { await pendingRemoval.remove?(true); await reload() }
+                    Task { await pendingRemoval.remove?(true); await reload(); present("Removed and deleted from disk.") }
                     self.pendingRemoval = nil
                 }
                 if pendingRemoval.blocklist != nil {
                     Button("Blocklist & search again") {
-                        Task { await pendingRemoval.blocklist?(); await reload() }
+                        Task { await pendingRemoval.blocklist?(); await reload(); present("Blocklisted — searching again.") }
                         self.pendingRemoval = nil
                     }
                 }
@@ -119,9 +125,26 @@ struct DownloadsView: View {
                         .font(.caption2).foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 8)
-                Button("Retry all") { Task { await retryAllImports() } }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
+                Button {
+                    Task {
+                        isRetryingAll = true
+                        let count = await retryAllImports()
+                        isRetryingAll = false
+                        present(count == 1 ? "Retrying 1 import…" : "Retrying \(count) imports…")
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        if isRetryingAll {
+                            ProgressView().controlSize(.mini).tint(.white)
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        Text("Retry all")
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+                .disabled(isRetryingAll)
             }
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -131,14 +154,22 @@ struct DownloadsView: View {
         }
     }
 
-    /// Re-processes monitored downloads on each affected instance once.
-    private func retryAllImports() async {
+    /// Re-processes monitored downloads on each affected instance once. Returns
+    /// the number of instances nudged, so the caller can confirm the action.
+    @discardableResult
+    private func retryAllImports() async -> Int {
         var done = Set<String>()
         for item in stuckImports {
             guard let retry = item.retryImport else { continue }
             if done.insert(item.instanceName).inserted { await retry() }
         }
         await reload()
+        return done.count
+    }
+
+    /// Shows a transient confirmation banner for a completed queue action.
+    private func present(_ message: String) {
+        withAnimation { toast = message }
     }
 
     /// Builds the interactive-search loader for a stuck item's deep-link.
@@ -229,7 +260,7 @@ struct DownloadsView: View {
         } else {
             List {
                 ForEach(items) { download in
-                    DownloadRow(download: download, reload: reload,
+                    DownloadRow(download: download, reload: reload, notify: present,
                                 onRemove: { pendingRemoval = download },
                                 onInteractiveSearch: { openInteractiveSearch(download) })
                         .swipeActions(edge: .trailing) {
@@ -241,13 +272,17 @@ struct DownloadsView: View {
                         }
                         .swipeActions(edge: .leading) {
                             if download.togglePause != nil {
+                                let wasPaused = download.isPaused
                                 Button {
-                                    Task { await download.togglePause?(); await reload() }
+                                    Task {
+                                        await download.togglePause?(); await reload()
+                                        present(wasPaused ? "Resuming…" : "Pausing…")
+                                    }
                                 } label: {
-                                    Label(download.isPaused ? "Resume" : "Pause",
-                                          systemImage: download.isPaused ? "play.fill" : "pause.fill")
+                                    Label(wasPaused ? "Resume" : "Pause",
+                                          systemImage: wasPaused ? "play.fill" : "pause.fill")
                                 }
-                                .tint(download.isPaused ? .green : .orange)
+                                .tint(wasPaused ? .green : .orange)
                             }
                         }
                 }
@@ -303,10 +338,10 @@ struct DownloadsView: View {
                 }
                 Divider()
                 Button {
-                    Task { await model.pauseAllClients(store: instanceStore); await reload() }
+                    Task { await model.pauseAllClients(store: instanceStore); await reload(); present("Paused all download clients.") }
                 } label: { Label("Pause All", systemImage: "pause.fill") }
                 Button {
-                    Task { await model.resumeAllClients(store: instanceStore); await reload() }
+                    Task { await model.resumeAllClients(store: instanceStore); await reload(); present("Resumed all download clients.") }
                 } label: { Label("Resume All", systemImage: "play.fill") }
                 Divider()
                 Button {
@@ -327,6 +362,8 @@ struct DownloadsView: View {
                                      byDays: settings.seedLimitByDays, maxDays: settings.maxSeedDays,
                                      byRatio: settings.seedLimitByRatio, maxRatio: settings.maxSeedRatio,
                                      action: settings.seedLimitAction)
+        // Route the seed-limit janitor's result through the shared toast.
+        if let status = model.seedLimitStatus { present(status); model.seedLimitStatus = nil }
     }
 
     /// Polls on the configured interval while on screen. SwiftUI cancels the
@@ -389,6 +426,8 @@ struct FilterChip: View {
 private struct DownloadRow: View {
     let download: UnifiedDownload
     let reload: () async -> Void
+    /// Surfaces a confirmation banner after an action completes.
+    var notify: (String) -> Void = { _ in }
     let onRemove: () -> Void
     var onInteractiveSearch: () -> Void = {}
 
@@ -425,59 +464,46 @@ private struct DownloadRow: View {
     }
 
     /// Reprocess actions for an *arr item stuck waiting to import: open its
-    /// interactive search, retry the import, or blocklist & search again.
+    /// interactive search, retry the import, or blocklist & search again. The
+    /// chips share one equal-width row so labels stay on a single line at a
+    /// consistent size instead of one wrapping when a longer neighbour crowds it.
     @ViewBuilder
     private var importActions: some View {
         HStack(spacing: 8) {
             if download.supportsInteractiveSearch {
-                actionChip("Search", systemImage: "list.bullet.rectangle", tint: Theme.teal) {
-                    onInteractiveSearch()
-                }
+                DownloadActionChip(title: "Search", systemImage: "magnifyingglass", tint: Theme.teal,
+                                   navigate: onInteractiveSearch)
             }
             if download.retryImport != nil {
-                asyncActionChip("Retry import", systemImage: "arrow.clockwise", tint: .blue) {
-                    await download.retryImport?()
+                DownloadActionChip(title: "Retry import", systemImage: "arrow.clockwise", tint: .blue) {
+                    await download.retryImport?(); await reload(); notify("Retrying import…")
                 }
             }
             if download.blocklist != nil {
-                asyncActionChip("Re-search", systemImage: "arrow.triangle.2.circlepath", tint: .orange) {
-                    await download.blocklist?()
+                DownloadActionChip(title: "Re-search", systemImage: "arrow.triangle.2.circlepath", tint: .orange) {
+                    await download.blocklist?(); await reload(); notify("Blocklisted — searching again.")
                 }
             }
         }
         .padding(.top, 2)
     }
 
-    private func actionChip(_ title: String, systemImage: String, tint: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Label(title, systemImage: systemImage)
-                .font(.caption2.weight(.semibold))
-                .padding(.horizontal, 8).padding(.vertical, 5)
-                .background(tint.opacity(0.18), in: Capsule())
-                .foregroundStyle(tint)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func asyncActionChip(_ title: String, systemImage: String, tint: Color, action: @escaping () async -> Void) -> some View {
-        actionChip(title, systemImage: systemImage, tint: tint) {
-            Task { await action(); await reload() }
-        }
-    }
-
     /// Inline icon controls: play/pause, recheck and remove.
     private var controls: some View {
         HStack(spacing: 4) {
             if download.togglePause != nil {
-                iconButton(download.isPaused ? "play.fill" : "pause.fill",
-                           tint: download.isPaused ? .green : .orange,
-                           help: download.isPaused ? "Resume" : "Pause") {
-                    await download.togglePause?()
+                let paused = download.isPaused
+                AsyncGlassIconButton(
+                    symbol: paused ? "play.fill" : "pause.fill",
+                    tint: paused ? .green : .orange,
+                    help: paused ? "Resume" : "Pause"
+                ) {
+                    await download.togglePause?(); await reload(); notify(paused ? "Resuming…" : "Pausing…")
                 }
             }
             if download.recheck != nil {
-                iconButton("arrow.triangle.2.circlepath", tint: .blue, help: "Recheck") {
-                    await download.recheck?()
+                AsyncGlassIconButton(symbol: "arrow.triangle.2.circlepath", tint: .blue, help: "Recheck") {
+                    await download.recheck?(); await reload(); notify("Rechecking…")
                 }
             }
             if download.remove != nil {
@@ -493,18 +519,94 @@ private struct DownloadRow: View {
             }
         }
     }
+}
 
-    private func iconButton(_ symbol: String, tint: Color, help: String, action: @escaping () async -> Void) -> some View {
+// MARK: - Reusable download-action controls
+
+/// An equal-width action pill for a download row. The async variant shows an
+/// inline spinner and disables itself while running, so a tap is unmistakably
+/// acknowledged and can't fire twice; the navigate variant just triggers (its
+/// pushed screen is its own feedback). Equal width + single-line text keep the
+/// row's chips visually consistent.
+private struct DownloadActionChip: View {
+    let title: LocalizedStringKey
+    let systemImage: String
+    let tint: Color
+    let showsProgress: Bool
+    let action: () async -> Void
+    @State private var running = false
+
+    /// Async action: shows a spinner and locks out re-taps until it finishes.
+    init(title: LocalizedStringKey, systemImage: String, tint: Color, action: @escaping () async -> Void) {
+        self.title = title; self.systemImage = systemImage; self.tint = tint
+        self.showsProgress = true; self.action = action
+    }
+
+    /// Navigation action: fires immediately, no spinner.
+    init(title: LocalizedStringKey, systemImage: String, tint: Color, navigate: @escaping () -> Void) {
+        self.title = title; self.systemImage = systemImage; self.tint = tint
+        self.showsProgress = false; self.action = { navigate() }
+    }
+
+    var body: some View {
         Button {
-            Task { await action(); await reload() }
+            guard !running else { return }
+            if showsProgress {
+                running = true
+                Task { await action(); running = false }
+            } else {
+                Task { await action() }  // navigate: completes immediately, no spinner
+            }
         } label: {
-            Image(systemName: symbol)
-                .font(.body)
-                .frame(width: 30, height: 30)
-                .foregroundStyle(tint)
-                .glassCircle()
+            HStack(spacing: 5) {
+                if running {
+                    ProgressView().controlSize(.mini)
+                } else {
+                    Image(systemName: systemImage)
+                }
+                Text(title).lineLimit(1).minimumScaleFactor(0.8)
+            }
+            .font(.caption2.weight(.semibold))
+            .frame(maxWidth: .infinity)
+            .frame(height: 30)
+            .background(tint.opacity(0.16), in: Capsule())
+            .foregroundStyle(tint)
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .disabled(running)
+    }
+}
+
+/// A circular glass icon control that swaps its glyph for a spinner and disables
+/// itself while its async action runs — so inline pause/resume and recheck taps
+/// show progress and can't double-fire.
+private struct AsyncGlassIconButton: View {
+    let symbol: String
+    let tint: Color
+    let help: String
+    let action: () async -> Void
+    @State private var running = false
+
+    var body: some View {
+        Button {
+            guard !running else { return }
+            running = true
+            Task { await action(); running = false }
+        } label: {
+            Group {
+                if running {
+                    ProgressView().controlSize(.mini)
+                } else {
+                    Image(systemName: symbol).font(.body)
+                }
+            }
+            .frame(width: 30, height: 30)
+            .foregroundStyle(tint)
+            .glassCircle()
+        }
+        .buttonStyle(.plain)
+        .disabled(running)
         .help(help)
     }
 }

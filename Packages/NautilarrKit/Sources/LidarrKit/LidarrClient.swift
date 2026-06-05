@@ -66,8 +66,13 @@ public struct LidarrClient: Sendable {
     }
 
     // MARK: Interactive search
+    /// Lidarr queries every configured indexer synchronously before responding,
+    /// so this uses the extended timeout — otherwise an album search times out and
+    /// the UI wrongly reads "No releases found".
     public func releases(albumId: Int) async throws -> [LidarrRelease] {
-        try await api.send(.get("\(Self.base)/release", query: [URLQueryItem(name: "albumId", value: String(albumId))]))
+        try await api.send(.get("\(Self.base)/release",
+                                query: [URLQueryItem(name: "albumId", value: String(albumId))],
+                                timeout: APIClient.interactiveSearchTimeout))
     }
     public func grab(_ release: LidarrRelease) async throws {
         guard let guid = release.guid, let indexerId = release.indexerId else { throw APIError.invalidResponse }

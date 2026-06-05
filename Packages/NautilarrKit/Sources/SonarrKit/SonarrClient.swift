@@ -98,9 +98,14 @@ public struct SonarrClient: Sendable {
 
     // MARK: - Interactive search (releases)
 
-    /// Interactive search for releases for a specific episode.
+    /// Interactive search for releases for a specific episode. Sonarr queries
+    /// every configured indexer synchronously before responding, so this gets the
+    /// extended timeout — otherwise an aired episode with several indexers times
+    /// out and the UI wrongly reads "No releases found".
     public func releases(episodeId: Int) async throws -> [SonarrRelease] {
-        try await api.send(.get("\(Self.base)/release", query: [URLQueryItem(name: "episodeId", value: String(episodeId))]))
+        try await api.send(.get("\(Self.base)/release",
+                                query: [URLQueryItem(name: "episodeId", value: String(episodeId))],
+                                timeout: APIClient.interactiveSearchTimeout))
     }
 
     /// Interactive search for releases for an entire season.
@@ -109,7 +114,8 @@ public struct SonarrClient: Sendable {
             URLQueryItem(name: "seriesId", value: String(seriesId)),
             URLQueryItem(name: "seasonNumber", value: String(seasonNumber))
         ]
-        return try await api.send(.get("\(Self.base)/release", query: query))
+        return try await api.send(.get("\(Self.base)/release", query: query,
+                                       timeout: APIClient.interactiveSearchTimeout))
     }
 
     /// Push a chosen release to the download client.

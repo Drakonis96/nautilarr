@@ -15,6 +15,12 @@ public final class APIClient: @unchecked Sendable {
     /// can reflect the current network (LAN first vs. WAN first).
     public typealias BaseURLProvider = @Sendable () -> [URL]
 
+    /// Per-request timeout for endpoints that block server-side while the *arr
+    /// queries every configured indexer (interactive release search). The normal
+    /// 30 s default times these out before the search returns, which surfaces as
+    /// "No releases found"; opt those endpoints into this longer budget instead.
+    public static let interactiveSearchTimeout: TimeInterval = 120
+
     private let baseURLProvider: BaseURLProvider
     private let authorizer: RequestAuthorizer
     private let extraHeaders: [String: String]
@@ -47,7 +53,11 @@ public final class APIClient: @unchecked Sendable {
         self.decoder = decoder
 
         let configuration = sessionConfiguration ?? .ephemeral
-        configuration.timeoutIntervalForRequest = timeout
+        // The session ceiling must allow the longest per-request timeout an
+        // endpoint may opt into (interactive search), or it would cap those
+        // requests early. Ordinary requests still bound themselves with their own
+        // (shorter) `URLRequest.timeoutInterval`, set per request in `makeRequest`.
+        configuration.timeoutIntervalForRequest = max(timeout, Self.interactiveSearchTimeout)
         configuration.waitsForConnectivity = false
 
         if allowSelfSignedHosts.isEmpty {
@@ -207,7 +217,7 @@ public final class APIClient: @unchecked Sendable {
         }
         guard let url = components.url else { throw APIError.invalidBaseURL }
 
-        var request = URLRequest(url: url, timeoutInterval: timeout)
+        var request = URLRequest(url: url, timeoutInterval: endpoint.timeout ?? timeout)
         request.httpMethod = endpoint.method.rawValue
         request.httpBody = endpoint.body
         request.setValue("application/json", forHTTPHeaderField: "Accept")
