@@ -18,6 +18,7 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
     case tautulli
     case jellystat
     case unraid
+    case statainer
     case ssh
     case server
     case settings
@@ -40,6 +41,7 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         case .tautulli: return "Tautulli"
         case .jellystat: return "Jellystat"
         case .unraid: return "Unraid"
+        case .statainer: return "Statainer"
         case .ssh: return "SSH / SFTP"
         case .server: return "Server"
         case .settings: return "Settings"
@@ -62,6 +64,7 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         case .tautulli: return "chart.bar.xaxis"
         case .jellystat: return "chart.bar.xaxis"
         case .unraid: return "server.rack"
+        case .statainer: return "shippingbox"
         case .ssh: return "terminal"
         case .server: return "server.rack"
         case .settings: return "gearshape"
@@ -84,6 +87,7 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         case .tautulli: return "service-tautulli"
         case .jellystat: return "service-jellystat"
         case .unraid: return "service-unraid"
+        case .statainer: return "service-statainer"
         default: return nil
         }
     }
@@ -95,6 +99,7 @@ enum AppDestination: String, CaseIterable, Identifiable, Hashable {
         case .tautulli: return .tautulli
         case .jellystat: return .jellystat
         case .unraid: return .unraid
+        case .statainer: return .statainer
         case .ssh: return .ssh
         default: return nil
         }

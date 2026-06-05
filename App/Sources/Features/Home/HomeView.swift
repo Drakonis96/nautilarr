@@ -234,7 +234,7 @@ struct HomeView: View {
         case .sonarr, .radarr, .lidarr, .qbittorrent, .transmission, .deluge, .sabnzbd,
              .nzbget, .overseerr, .prowlarr, .jackett, .nzbhydra2, .bazarr:
             return true
-        case .tautulli, .jellystat, .unraid, .ssh:
+        case .tautulli, .jellystat, .unraid, .statainer, .ssh:
             return detailInstance(for: stat) != nil
         }
     }
@@ -260,6 +260,8 @@ struct HomeView: View {
             if let inst = detailInstance(for: stat) { JellystatDetailView(instance: inst) }
         case .unraid:
             if let inst = detailInstance(for: stat) { UnraidDetailView(instance: inst) }
+        case .statainer:
+            if let inst = detailInstance(for: stat) { StatainerDetailView(instance: inst) }
         case .ssh:
             if let inst = detailInstance(for: stat) { SSHDetailView(instance: inst) }
         }

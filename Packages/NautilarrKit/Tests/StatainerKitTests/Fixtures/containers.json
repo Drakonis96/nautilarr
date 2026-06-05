@@ -1,0 +1,33 @@
+{
+  "count": 2,
+  "running": 1,
+  "exited": 1,
+  "containers": [
+    {
+      "id": "9f0e1234abcd",
+      "name": "web",
+      "status": "running",
+      "image": "nginx:latest",
+      "ports": "8080->80/tcp",
+      "restarts": 0,
+      "uptime": "3h 12m",
+      "uptime_sec": 11520,
+      "update_available": 1,
+      "compose_project": "demo",
+      "compose_service": "web"
+    },
+    {
+      "id": "1a2b3c4d5e6f",
+      "name": "db",
+      "status": "exited",
+      "image": "postgres:16",
+      "ports": "",
+      "restarts": 2,
+      "uptime": "",
+      "uptime_sec": 0,
+      "update_available": 0,
+      "compose_project": "demo",
+      "compose_service": "db"
+    }
+  ]
+}

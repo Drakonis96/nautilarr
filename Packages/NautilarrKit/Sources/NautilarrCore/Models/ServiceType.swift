@@ -28,6 +28,7 @@ public enum ServiceType: String, Codable, CaseIterable, Sendable, Identifiable {
     case jackett
     case bazarr
     case unraid
+    case statainer
     case ssh
 
     public var id: String { rawValue }
@@ -46,7 +47,7 @@ public enum ServiceType: String, Codable, CaseIterable, Sendable, Identifiable {
             return .core
         case .overseerr, .qbittorrent, .sabnzbd, .nzbget, .transmission, .deluge:
             return .downloads
-        case .tautulli, .jellystat, .prowlarr, .nzbhydra2, .jackett, .bazarr, .unraid, .ssh:
+        case .tautulli, .jellystat, .prowlarr, .nzbhydra2, .jackett, .bazarr, .unraid, .statainer, .ssh:
             return .monitoring
         }
     }
@@ -70,6 +71,7 @@ public enum ServiceType: String, Codable, CaseIterable, Sendable, Identifiable {
         case .jackett: return "Jackett"
         case .bazarr: return "Bazarr"
         case .unraid: return "Unraid"
+        case .statainer: return "Statainer"
         case .ssh: return "SSH / SFTP"
         }
     }
@@ -106,6 +108,7 @@ public enum ServiceType: String, Codable, CaseIterable, Sendable, Identifiable {
         case .prowlarr, .nzbhydra2, .jackett: return "magnifyingglass.circle"
         case .bazarr: return "captions.bubble"
         case .unraid: return "server.rack"
+        case .statainer: return "shippingbox"
         case .ssh: return "terminal"
         }
     }
@@ -130,6 +133,7 @@ public enum ServiceType: String, Codable, CaseIterable, Sendable, Identifiable {
         case .jackett: return 9117
         case .bazarr: return 6767
         case .unraid: return 443
+        case .statainer: return 5001
         case .ssh: return 22
         }
     }
@@ -154,6 +158,9 @@ public enum ServiceType: String, Codable, CaseIterable, Sendable, Identifiable {
             return .transmissionSession
         case .unraid:
             return .apiKeyHeader(headerName: "x-api-key")
+        case .statainer:
+            // Statainer accepts `Authorization: Bearer <token>` or this header.
+            return .apiKeyHeader(headerName: "X-API-Key")
         case .ssh:
             return .sshCredentials
         }

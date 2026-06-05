@@ -520,3 +520,31 @@
 "Couldn't load sessions" = "Impossible de charger les sessions";
 "Couldn't load activity" = "Impossible de charger l’activité";
 "If a stream is playing but isn't shown, your Jellystat may be using the Jellyfin WebSocket (Jellyfin 10.11+). Set JF_USE_WEBSOCKETS=false on the Jellystat server to fall back to polling." = "Si une lecture est en cours mais n’apparaît pas, votre Jellystat utilise peut-être le WebSocket de Jellyfin (Jellyfin 10.11+). Définissez JF_USE_WEBSOCKETS=false sur le serveur Jellystat pour revenir à l’interrogation.";
+
+/* Statainer */
+"Host" = "Hôte";
+"Hostname" = "Nom d'hôte";
+"OS" = "SE";
+"Docker" = "Docker";
+"CPU" = "CPU";
+"Images" = "Images";
+"Containers" = "Conteneurs";
+"Running" = "En cours";
+"Stopped" = "Arrêtés";
+"Updates" = "Mises à jour";
+"Updates first" = "Mises à jour d'abord";
+"CPU usage" = "Utilisation CPU";
+"Memory usage" = "Utilisation mémoire";
+"Filter containers" = "Filtrer les conteneurs";
+"Sort containers" = "Trier les conteneurs";
+"Action failed" = "Échec de l'action";
+"OK" = "OK";
+"Update all" = "Tout mettre à jour";
+"Update all containers with a newer image?" = "Mettre à jour tous les conteneurs avec une image plus récente ?";
+"No Statainer" = "Aucun Statainer";
+"Add a Statainer service in Settings to manage your Docker containers." = "Ajoutez un service Statainer dans les Réglages pour gérer vos conteneurs Docker.";
+"No containers match the filter." = "Aucun conteneur ne correspond au filtre.";
+"%lld update(s) available" = "%lld mise(s) à jour disponible(s)";
+"Containers — %lld/%lld running" = "Conteneurs — %lld/%lld en cours";
+"Statainer %@" = "Statainer %@";
+"Connected — Statainer %@, %lld container(s)." = "Connecté — Statainer %@, %lld conteneur(s).";

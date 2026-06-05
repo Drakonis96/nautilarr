@@ -1,0 +1,7 @@
+{
+  "ok": true,
+  "action": "restart",
+  "container_id": "9f0e1234abcd",
+  "name": "web",
+  "message": "Container web restarted."
+}

@@ -16,6 +16,7 @@ import SSHKit
 import JellystatKit
 import UnraidKit
 import TorznabKit
+import StatainerKit
 
 /// Tests reachability/authentication for an instance. Phase-1 services have
 /// rich tests (version probe); others fall back to a generic reachability check.
@@ -159,6 +160,15 @@ enum ConnectionTester {
             do {
                 let caps = try await client.capabilities()
                 return Result(success: true, message: L("Connected — %@ (%lld categories).", caps.serverTitle ?? "indexer", caps.categoryCount))
+            } catch { return Result(success: false, message: describe(error)) }
+
+        case .statainer:
+            let client = StatainerClient(instance: instance, credential: credential, monitor: monitor)
+            do {
+                // Validate the token cheaply, then best-effort the container count.
+                let ping = try await client.ping()
+                let count = (try? await client.containers().count) ?? 0
+                return Result(success: true, message: L("Connected — Statainer %@, %lld container(s).", ping.version ?? "", count))
             } catch { return Result(success: false, message: describe(error)) }
         }
     }

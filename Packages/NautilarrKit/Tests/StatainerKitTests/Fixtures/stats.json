@@ -1,0 +1,24 @@
+{
+  "count": 1,
+  "containers": [
+    {
+      "id": "9f0e1234abcd",
+      "name": "web",
+      "status": "running",
+      "cpu": 12.5,
+      "mem": 30.1,
+      "mem_usage": 192.4,
+      "mem_limit": 512.0,
+      "net_io_rx": 1.2,
+      "net_io_tx": 0.8,
+      "block_io_r": 0.0,
+      "block_io_w": 4.1,
+      "pid_count": 12,
+      "restarts": 0,
+      "uptime_sec": 11520,
+      "update_available": 1,
+      "compose_project": "demo",
+      "compose_service": "web"
+    }
+  ]
+}

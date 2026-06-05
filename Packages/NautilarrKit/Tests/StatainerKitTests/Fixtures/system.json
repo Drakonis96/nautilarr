@@ -1,0 +1,20 @@
+{
+  "cpu_cores": 8,
+  "max_cpu_percent": 800,
+  "cpu_count_docker": 8,
+  "memory_total_bytes": 16777216000,
+  "memory_total_mb": 16000.0,
+  "memory_total_gb": 15.62,
+  "containers": 12,
+  "containers_running": 9,
+  "containers_paused": 0,
+  "containers_stopped": 3,
+  "images": 24,
+  "docker_version": "27.0.3",
+  "operating_system": "Debian GNU/Linux 12",
+  "os_type": "linux",
+  "architecture": "x86_64",
+  "kernel_version": "6.1.0",
+  "hostname": "docker-host",
+  "app_version": "v0.9.17"
+}

@@ -15,6 +15,7 @@ import BazarrKit
 import OverseerrKit
 import UnraidKit
 import TorznabKit
+import StatainerKit
 
 /// Aggregates dashboard data across EVERY configured service — media managers,
 /// download clients, indexers, request and monitoring services — so the Home
@@ -193,6 +194,10 @@ final class HomeViewModel: ObservableObject {
         for instance in store.instances(ofType: .nzbhydra2) + store.instances(ofType: .jackett) {
             guard let c = store.torznabClient(for: instance) else { continue }
             producers.append { await Self.loadTorznab(instance: instance, client: c) }
+        }
+        for instance in store.instances(ofType: .statainer) {
+            guard let c = store.statainerClient(for: instance) else { continue }
+            producers.append { await Self.loadStatainer(instance: instance, client: c) }
         }
 
         let contributions = await withTaskGroup(of: [Contribution].self) { group in
@@ -475,6 +480,21 @@ final class HomeViewModel: ObservableObject {
                                       metrics: [Metric(label: "Categories", value: "\(caps.categoryCount)")]))]
         } catch {
             return [.stat(errorStat(instance, instance.type, error))]
+        }
+    }
+
+    nonisolated private static func loadStatainer(instance: ServiceInstance, client: StatainerClient) async -> [Contribution] {
+        do {
+            let containers = try await client.containers()
+            let running = containers.filter(\.isRunning).count
+            let updates = containers.filter(\.hasUpdate).count
+            var metrics = [Metric(label: "Running", value: "\(running)/\(containers.count)")]
+            if updates > 0 { metrics.append(Metric(label: "Updates", value: "\(updates)")) }
+            return [.stat(ServiceStat(instanceName: instance.name, type: .statainer,
+                                      headline: "\(containers.count) Containers", metrics: metrics,
+                                      instanceID: instance.id))]
+        } catch {
+            return [.stat(errorStat(instance, .statainer, error))]
         }
     }
 

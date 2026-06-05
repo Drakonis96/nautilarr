@@ -279,6 +279,11 @@ extension AppDestination {
                            emptyDescription: "Add an Unraid service in Settings to see system, array and Docker status.") {
                 UnraidDetailView(instance: $0)
             }
+        case .statainer:
+            ServiceSection(type: .statainer, emptyTitle: "No Statainer",
+                           emptyDescription: "Add a Statainer service in Settings to manage your Docker containers.") {
+                StatainerDetailView(instance: $0)
+            }
         case .ssh:
             ServiceSection(type: .ssh, emptyTitle: "No SSH services",
                            emptyDescription: "Add an SSH service in Settings for a terminal, host stats and a file browser.") {

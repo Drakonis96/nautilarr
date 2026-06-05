@@ -13,8 +13,8 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "0.1.6"
-    CURRENT_PROJECT_VERSION: "7"
+    MARKETING_VERSION: "0.1.7"
+    CURRENT_PROJECT_VERSION: "8"
     SWIFT_VERSION: "5.9"
     # Build with implicitly-built modules. Xcode 26's default (explicitly-built
     # modules) turns swift-nio-ssh's umbrella `import NIO` from a warning into a
@@ -73,6 +73,8 @@ targets:
         product: UnraidKit
       - package: NautilarrKit
         product: TorznabKit
+      - package: NautilarrKit
+        product: StatainerKit
     info:
       path: App/Resources/Info.plist
       properties:

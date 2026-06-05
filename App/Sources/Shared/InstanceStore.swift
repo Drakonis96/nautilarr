@@ -17,6 +17,7 @@ import SSHKit
 import JellystatKit
 import UnraidKit
 import TorznabKit
+import StatainerKit
 
 /// The single source of truth for configured service instances.
 ///
@@ -274,6 +275,11 @@ final class InstanceStore: ObservableObject {
     func torznabClient(for instance: ServiceInstance) -> TorznabClient? {
         guard instance.type == .nzbhydra2 || instance.type == .jackett else { return nil }
         return TorznabClient(instance: withProxyAuth(instance), credential: credential(for: instance), monitor: monitor)
+    }
+
+    func statainerClient(for instance: ServiceInstance) -> StatainerClient? {
+        guard instance.type == .statainer else { return nil }
+        return StatainerClient(instance: withProxyAuth(instance), credential: credential(for: instance), monitor: monitor)
     }
 
     /// Headers needed to fetch images served behind a service's auth, combining

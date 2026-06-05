@@ -19,8 +19,8 @@ final class AppSettings: ObservableObject {
     /// existing installs adopt it once (their custom reorder is reset that once).
     /// v3 placed the Plex/Jellyfin shortcuts after Home; v4 adds the independent
     /// Tautulli/Jellystat/Unraid/SSH sections before Server; v5 adds the Activity
-    /// inbox after Downloads.
-    private static let currentTabOrderVersion = 5
+    /// inbox after Downloads; v6 adds the Statainer section after Unraid.
+    private static let currentTabOrderVersion = 6
 
     init() {
         // One-time migration: adopt the new built-in section order (Subtitles

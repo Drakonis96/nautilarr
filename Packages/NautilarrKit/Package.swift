@@ -34,7 +34,9 @@ let package = Package(
         .library(name: "BazarrKit", targets: ["BazarrKit"]),
         .library(name: "JellystatKit", targets: ["JellystatKit"]),
         .library(name: "UnraidKit", targets: ["UnraidKit"]),
-        .library(name: "TorznabKit", targets: ["TorznabKit"])
+        .library(name: "TorznabKit", targets: ["TorznabKit"]),
+        // Self-hosted Docker dashboard.
+        .library(name: "StatainerKit", targets: ["StatainerKit"])
     ],
     dependencies: [
         // Pure-Swift SSH (SwiftNIO SSH under the hood). SPM, no paid
@@ -115,6 +117,10 @@ let package = Package(
         ),
         .target(
             name: "TorznabKit",
+            dependencies: ["NautilarrCore"]
+        ),
+        .target(
+            name: "StatainerKit",
             dependencies: ["NautilarrCore"]
         ),
         .testTarget(
@@ -198,6 +204,11 @@ let package = Package(
         .testTarget(
             name: "TorznabKitTests",
             dependencies: ["TorznabKit", "NautilarrCore"]
+        ),
+        .testTarget(
+            name: "StatainerKitTests",
+            dependencies: ["StatainerKit", "NautilarrCore"],
+            resources: [.copy("Fixtures")]
         )
     ]
 )
