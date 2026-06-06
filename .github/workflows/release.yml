@@ -82,6 +82,7 @@ jobs:
             --ipa "${IPA_PATH}" \
             --download-url "${DOWNLOAD_URL}" \
             --icon-url "${ICON_URL}" \
+            --website "https://github.com/${GITHUB_REPOSITORY}" \
             --date "${{ steps.meta.outputs.date }}" \
             --notes "Nautilarr ${{ steps.meta.outputs.version }}" \
             --output docs/apps.json
